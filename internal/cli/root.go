@@ -37,7 +37,7 @@ func NewRootCommand() *cobra.Command {
 removed, anchors it in git before and during execution, and carries it in a
 detached in-toto attestation beside the bundle's snapshot hash (bundle.id).
 
-Verbs land by phase: hash → anchor → attest, verify.`,
+Verbs: hash (available) → anchor (phase 2) → attest, verify (phase 3).`,
 		Version:       version.String(),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -47,5 +47,6 @@ Verbs land by phase: hash → anchor → attest, verify.`,
 	}
 	root.PersistentFlags().BoolVar(&a.noColor, "no-color", false, "disable colored output")
 	root.AddCommand(newVersionCommand(a))
+	root.AddCommand(newHashCommand(a))
 	return root
 }

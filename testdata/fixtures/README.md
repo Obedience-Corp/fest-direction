@@ -12,8 +12,8 @@ drift the fixtures.
 
 Expected direction-hash behavior (phase 1):
 
-- **v1 normalization:** baseline and mutated yield the **same** direction hash.
-  Record it here once computed.
+- **v1 normalization:** baseline and mutated yield the **same** direction hash:
+  `sha256:4ee0bd159d49c964e342148f9da8618d1690bcf5bce38c48db87c6ce88041ba9` (recorded 2026-08-21, asserted by `TestGoldenV1`).
 - **PoC rules** (design's line-wise procedure: drop `.fest/`, delete
   `^fest_status:` / `^fest_updated:` lines from every `*.md`, reset
   `TODO.md` checkboxes, pack): both yield
@@ -23,6 +23,8 @@ Expected direction-hash behavior (phase 1):
   check, not the v1 spec; v1 also strips `fest.yaml` `status_history` and
   `fest_working_dir`.
 
-Notes: this fixture has no checked `TODO.md` boxes and no `fest_working_dir`,
-so those rules need a second fixture when they are implemented. A non-festival
-kind fixture (direction hash must equal `bundle.id`) is added in phase 1.
+| `workitem-note/` | Non-festival kind (`.workitem` type `note`), no execution state | direction hash == snapshot id by construction |
+
+Notes: the DA0001 fixture has no checked `TODO.md` boxes and no
+`fest_working_dir`, so those rules are unit-tested on synthetic input only; add
+a real fixture when one exists.

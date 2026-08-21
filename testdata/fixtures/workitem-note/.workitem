@@ -1,0 +1,8 @@
+version: v1alpha8
+kind: workitem
+id: note-direction-fixture-2026-08-21
+type: note
+title: Direction fixture note
+ref: WI-fixture
+tags:
+    - fixture

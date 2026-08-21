@@ -11,14 +11,32 @@ been revised since?*
 
 ## Status
 
-Scaffold. Verbs land by phase of the build festival (`direction-archive-DA0004`):
+Phase 1 of the build festival (`direction-archive-DA0004`) is in progress. Verbs:
 
 | Verb | Phase | Does |
 |------|-------|------|
-| `hash` | 1 | Normalize a work unit (strip `fest_status`, `fest_updated`, `.fest/`, checkbox state, `status_history`) and hash it with the SPEC §7.1 algorithm; also reports the snapshot `bundle.id` |
+| `hash` | **available** | Normalize a work unit (strip `fest_status`, `fest_updated`, `.fest/`, checkbox state, `status_history`) and hash it with the SPEC §7.1 algorithm; also reports the snapshot `bundle.id` |
 | `anchor` | 2 | Refuse a dirty tree, hash, write a local anchor record; hooks for commit trailers and `pre_task_start` |
 | `attest` | 3 | Emit an in-toto Statement v1 with a versioned direction-record predicate |
 | `verify` | 3 | Recompute both hashes from a bundle and check them against a statement |
+
+## Usage
+
+```console
+$ direction hash festivals/.dungeon/completed/dashboard-DA0001
+direction    sha256:4ee0bd159d49c964e342148f9da8618d1690bcf5bce38c48db87c6ce88041ba9
+normalization v1
+snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
+kind         festival
+subject      DA0001
+```
+
+Run it again after tasks complete and `snapshot` moves while `direction` does
+not — that is the whole point. `--json` emits the same fields as JSON; `--out
+<file>.festival` also writes the normalized bundle, whose `bundle.id` *is* the
+direction hash. The rule set is versioned in `docs/normalization.md`; an
+unrecognized `fest_*` field fails the command rather than silently changing
+the hash.
 
 ## Build
 
