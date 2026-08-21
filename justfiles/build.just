@@ -14,21 +14,26 @@ default:
     @just --list --justfile {{source_file()}}
 
 # Build for the current platform into bin/
+[no-cd]
 local:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
 
 # Build without optimizations for debugging
+[no-cd]
 debug:
     go build -gcflags 'all=-N -l' -o {{bin_dir}}/{{binary_name}}-debug {{cmd_path}}
 
 # Install to $GOBIN
+[no-cd]
 install:
     go install -ldflags '{{ldflags}}' {{cmd_path}}
 
 # Remove the binary from $GOBIN
+[no-cd]
 uninstall:
     rm -f "$(go env GOPATH)/bin/{{binary_name}}"
 
 # Remove build artifacts
+[no-cd]
 clean:
     rm -rf {{bin_dir}}/ coverage.out coverage.html
