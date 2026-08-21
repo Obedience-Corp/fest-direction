@@ -74,7 +74,18 @@ direction_anchor   [festival]   enabled   fail=closed  timeout=1m0s
 ```
 
 Completing the first three tasks of `002_IMPLEMENT_ANCHORING/01_anchor_command`
-fired the hook at `pre` / `task_start` each time (festival ledger):
+fired the hook at `pre` / `task_start` (festival ledger; the three `fail`
+entries are gate tasks whose own `results/` files were still uncommitted — the
+case that produced normalization v2, which excludes `results/`):
+
+- `01_git_state.md` → pass (149 ms)
+- `02_anchor_record.md` → pass (179 ms)
+- `03_anchor_verb.md` → pass (152 ms)
+- `04_task_start_binding.md` → pass (154 ms)
+- `05_testing.md` → fail (159 ms)
+- `06_review.md` → fail (164 ms)
+- `07_iterate.md` → fail (162 ms)
+- `08_fest_commit.md` → pass (115 ms)
 
 -  → pass in 149 ms
 -  → pass in 179 ms

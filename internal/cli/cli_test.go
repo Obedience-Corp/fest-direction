@@ -81,7 +81,7 @@ func TestHashCommand(t *testing.T) {
 	}{
 		{name: "cancelled context", ctx: cancelled, args: []string{"hash", fixture("dashboard-DA0001-baseline")}, wantErr: true, wantIs: context.Canceled},
 		{name: "missing path is reported once", ctx: context.Background(), args: []string{"--no-color", "hash", "/nonexistent/work-unit"}, wantErr: true, wantOut: []string{"✗"}},
-		{name: "baseline prints fields", ctx: context.Background(), args: []string{"--no-color", "hash", fixture("dashboard-DA0001-baseline")}, wantOut: []string{"direction", "sha256:", "normalization", "v1", "DA0001"}},
+		{name: "baseline prints fields", ctx: context.Background(), args: []string{"--no-color", "hash", fixture("dashboard-DA0001-baseline")}, wantOut: []string{"direction", "sha256:", "normalization", "v2", "DA0001"}},
 		{name: "note prints dash subject", ctx: context.Background(), args: []string{"--no-color", "hash", fixture("workitem-note")}, wantOut: []string{"note"}},
 	}
 	for _, tc := range tests {
@@ -113,7 +113,7 @@ func TestHashCommandJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &res); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
-	if res.NormalizationVersion != 1 || !strings.HasPrefix(res.DirectionHash, "sha256:") || res.Subject == nil || res.Subject.ID != "DA0001" {
+	if res.NormalizationVersion != 2 || !strings.HasPrefix(res.DirectionHash, "sha256:") || res.Subject == nil || res.Subject.ID != "DA0001" {
 		t.Fatalf("unexpected result: %+v", res)
 	}
 }

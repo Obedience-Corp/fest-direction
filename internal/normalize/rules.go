@@ -11,17 +11,6 @@ var ErrInvalidFestYAML = errors.New("invalid fest.yaml")
 // checkboxRE matches a checked Markdown task box at the start of a list item.
 var checkboxRE = regexp.MustCompile(`(?m)^(\s*[-*] )\[[xX]\]`)
 
-// excludedNames are never copied: execution trace, transfer records, anchor
-// records (evidence about the plan, not the plan), VCS internals, and
-// secrets. Matched by base name at any depth.
-var excludedNames = map[string]struct{}{
-	".fest":      {},
-	".bundles":   {},
-	".direction": {},
-	".git":       {},
-	".env":       {},
-}
-
 // resetCheckboxes turns "- [x]" / "- [X]" into "- [ ]" and reports how many
 // boxes changed. Text after the box is untouched.
 func resetCheckboxes(b []byte) ([]byte, int) {
@@ -48,10 +37,4 @@ func stripStatusHistory(b []byte) ([]byte, bool, error) {
 		return nil, false, err
 	}
 	return out, removed, nil
-}
-
-// excluded reports whether a base name is in the exclude set.
-func excluded(name string) bool {
-	_, ok := excludedNames[name]
-	return ok
 }

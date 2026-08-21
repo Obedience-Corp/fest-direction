@@ -167,3 +167,32 @@ func TestNormalizeFestRewriteIsStateOnly(t *testing.T) {
 		t.Fatalf("canonical form unexpected:\n%s", outs[0])
 	}
 }
+
+// TestNormalizeV2ExcludesResults: review and testing outputs written into a
+// sequence's results/ directory are evidence, not plan — v2 ignores them,
+// v1 (kept for verifying old records) does not.
+func TestNormalizeV2ExcludesResults(t *testing.T) {
+	t.Parallel()
+	src := copyTree(t, fixture("dashboard-DA0001-baseline"))
+	res := filepath.Join(src, "001_IMPLEMENT", "01_data_layer", "results")
+	if err := os.MkdirAll(res, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(res, "testing.md"), []byte("# results\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	v2 := filepath.Join(t.TempDir(), "v2")
+	if _, err := Normalize(context.Background(), src, v2, V2()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(v2, "001_IMPLEMENT", "01_data_layer", "results")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("v2 copied results/")
+	}
+	v1 := filepath.Join(t.TempDir(), "v1")
+	if _, err := Normalize(context.Background(), src, v1, V1()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(v1, "001_IMPLEMENT", "01_data_layer", "results", "testing.md")); err != nil {
+		t.Fatal("v1 must still include results/")
+	}
+}

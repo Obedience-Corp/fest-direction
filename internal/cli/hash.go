@@ -22,7 +22,7 @@ as the direction hash, beside the snapshot bundle.id of the raw tree.
 Nothing is written into <path>.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			res, err := direction.HashWith(cmd.Context(), args[0], normalize.V1(),
+			res, err := direction.HashWith(cmd.Context(), args[0], normalize.Current(),
 				direction.Options{KeepNormalizedBundle: out})
 			if err != nil {
 				return a.fail(cmd, err)

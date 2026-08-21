@@ -31,7 +31,7 @@ pre-execution anchor. Commit the record.`,
 			if err != nil {
 				return a.fail(cmd, err)
 			}
-			rec, _, err := anchor.Anchor(ctx, repo, args[0], normalize.V1(), anchor.Options{
+			rec, _, err := anchor.Anchor(ctx, repo, args[0], normalize.Current(), anchor.Options{
 				Force: force,
 				Tool:  anchor.Tool{Name: "direction", Version: version.Version},
 			})

@@ -9,12 +9,14 @@ progresses. Implemented in `internal/normalize`; the direction hash is the
 
 | `normalization_version` | Date | Change |
 |---|---|---|
+| 2 | 2026-08-21 | `results/` directories excluded. Testing and review outputs written into a sequence are evidence of execution, not the plan; surfaced when gate-task completions were blocked by their own results files. v1 remains available through `normalize.ForVersion(1)` so v1 records still verify |
 | 1 | 2026-08-21 | Initial rule set, derived from the design's `normalization-spec.md`. Finalized the same day, before any anchor entered history: `.direction/` added to the exclude set; frontmatter and `fest.yaml` made **canonical** (sorted keys, block style, no comments) and `.md` files end with exactly one newline — bring-up showed fest re-serializes a task's frontmatter on every status change |
 
 Any change to the tables or rules below is a new version. Direction hashes are
 comparable only within one version, and the version travels with every hash
 (`Result.NormalizationVersion`, the `Festival-Normalization` commit trailer,
-the attestation predicate).
+the attestation predicate). Past versions are never deleted:
+`normalize.ForVersion(n)` returns the exact rule set a record was made with.
 
 ## Frontmatter keys (`*.md`)
 
@@ -56,6 +58,7 @@ anchor without anyone noticing.
 |------|------|
 | `.fest/` | Excluded entirely — `progress_events.jsonl`, `status_history.json` are pure execution trace |
 | `.bundles/`, `.direction/`, `.git/`, `.env` | Excluded — transfer records, anchor records (evidence about the plan, not the plan), VCS internals, secrets |
+| `results/` (any depth) | Excluded since v2 — testing and review outputs are execution evidence |
 | `TODO.md` (any depth) | `- [x]` / `- [X]` → `- [ ]`; all text retained |
 | `fest.yaml` (root) | `metadata.status_history` removed; everything else retained |
 | Symlinks | Rejected (SPEC §4.3) |

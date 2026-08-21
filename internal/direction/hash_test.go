@@ -16,17 +16,17 @@ const (
 	goldenBaselineSnapshot = "sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e"
 	goldenMutatedSnapshot  = "sha256:5c7eced663c2efabbae61079f881aa9547c727eac6a29ca65de9ae2a80aaa9cd"
 	goldenPoCDirection     = "sha256:50ddaea058b7b8ee46f89422da257d80ccb863ca640d887474544c752cdc854a"
-	// goldenV1Direction is the v1 direction hash of dashboard-DA0001. It is
-	// recorded in testdata/fixtures/README.md; any normalization drift fails
-	// here loudly instead of silently moving every anchor.
-	goldenV1Direction = "sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a"
+	// goldenCurrentDirection is the direction hash of dashboard-DA0001 under
+	// normalize.Current(). It is recorded in testdata/fixtures/README.md; any
+	// rule drift fails here loudly instead of silently moving every anchor.
+	goldenCurrentDirection = "sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a"
 )
 
 func TestHashErrors(t *testing.T) {
 	t.Parallel()
 	t.Run("file path is not a directory", func(t *testing.T) {
 		t.Parallel()
-		_, err := Hash(context.Background(), filepath.Join(fixture("dashboard-DA0001-baseline"), "fest.yaml"), normalize.V1())
+		_, err := Hash(context.Background(), filepath.Join(fixture("dashboard-DA0001-baseline"), "fest.yaml"), normalize.Current())
 		if !errors.Is(err, ErrNotADirectory) {
 			t.Fatalf("err = %v, want ErrNotADirectory", err)
 		}
@@ -36,7 +36,7 @@ func TestHashErrors(t *testing.T) {
 		t.Parallel()
 		src := copyTree(t, fixture("dashboard-DA0001-baseline"))
 		injectUnknownField(t, filepath.Join(src, "001_IMPLEMENT", "01_data_layer", "03_implement_websocket.md"))
-		_, err := Hash(context.Background(), src, normalize.V1())
+		_, err := Hash(context.Background(), src, normalize.Current())
 		if !errors.Is(err, normalize.ErrUnknownField) {
 			t.Fatalf("err = %v, want ErrUnknownField", err)
 		}
@@ -76,11 +76,11 @@ func TestReadMeta(t *testing.T) {
 
 func TestGoldenStableAcrossExecution(t *testing.T) {
 	t.Parallel()
-	base, err := Hash(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.V1())
+	base, err := Hash(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
-	mut, err := Hash(context.Background(), fixture("dashboard-DA0001-mutated"), normalize.V1())
+	mut, err := Hash(context.Background(), fixture("dashboard-DA0001-mutated"), normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,23 +99,23 @@ func TestGoldenStableAcrossExecution(t *testing.T) {
 	if base.DirectionHash == base.SnapshotID {
 		t.Errorf("direction hash equals snapshot for a festival with state")
 	}
-	if base.NormalizationVersion != 1 || base.Kind != festivalbundle.KindFestival || base.Subject == nil || base.Subject.ID != "DA0001" {
+	if base.NormalizationVersion != normalize.Version || base.Kind != festivalbundle.KindFestival || base.Subject == nil || base.Subject.ID != "DA0001" {
 		t.Errorf("unexpected result metadata: %+v", base)
 	}
-	t.Logf("v1 direction hash: %s", base.DirectionHash)
+	t.Logf("current direction hash (v%d): %s", base.NormalizationVersion, base.DirectionHash)
 }
 
-func TestGoldenV1(t *testing.T) {
+func TestGoldenCurrent(t *testing.T) {
 	t.Parallel()
-	if goldenV1Direction == "REPLACE_ME" {
-		t.Skip("v1 golden not yet recorded")
+	if goldenCurrentDirection == "REPLACE_ME" {
+		t.Skip("golden not yet recorded")
 	}
-	res, err := Hash(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.V1())
+	res, err := Hash(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DirectionHash != goldenV1Direction {
-		t.Fatalf("v1 direction hash = %s, want %s — normalization drifted; bump normalize.Version and re-record", res.DirectionHash, goldenV1Direction)
+	if res.DirectionHash != goldenCurrentDirection {
+		t.Fatalf("direction hash = %s, want %s — normalization drifted; bump normalize.Version and re-record", res.DirectionHash, goldenCurrentDirection)
 	}
 }
 
@@ -136,7 +136,7 @@ func TestGoldenPoCReproduction(t *testing.T) {
 
 func TestGoldenNonFestivalKindEqualsSnapshot(t *testing.T) {
 	t.Parallel()
-	res, err := Hash(context.Background(), fixture("workitem-note"), normalize.V1())
+	res, err := Hash(context.Background(), fixture("workitem-note"), normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func TestGoldenNonFestivalKindEqualsSnapshot(t *testing.T) {
 func TestHashKeepsNormalizedBundle(t *testing.T) {
 	t.Parallel()
 	out := filepath.Join(t.TempDir(), "normalized.festival")
-	res, err := HashWith(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.V1(), Options{KeepNormalizedBundle: out})
+	res, err := HashWith(context.Background(), fixture("dashboard-DA0001-baseline"), normalize.Current(), Options{KeepNormalizedBundle: out})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestHashCancelledLeavesNoTempDirs(t *testing.T) {
 	t.Setenv("TMPDIR", tmpRoot)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := Hash(ctx, fixture("dashboard-DA0001-baseline"), normalize.V1())
+	_, err := Hash(ctx, fixture("dashboard-DA0001-baseline"), normalize.Current())
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled", err)
 	}
@@ -191,7 +191,7 @@ func TestHashCancelledLeavesNoTempDirs(t *testing.T) {
 func TestHashCleansTempDirsOnSuccess(t *testing.T) {
 	tmpRoot := t.TempDir()
 	t.Setenv("TMPDIR", tmpRoot)
-	if _, err := Hash(context.Background(), fixture("workitem-note"), normalize.V1()); err != nil {
+	if _, err := Hash(context.Background(), fixture("workitem-note"), normalize.Current()); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(tmpRoot)

@@ -30,7 +30,7 @@ var (
 )
 
 // Normalize copies the work-unit tree at src into dst with execution state
-// removed under policy p: excluded names are skipped, *.md frontmatter is
+// removed under policy p: the policy's excluded names are skipped, *.md frontmatter is
 // filtered, TODO.md checkboxes are reset, and fest.yaml loses
 // metadata.status_history. Relative paths are preserved exactly because SPEC
 // §7.1 hashes them. dst must be absent or an empty directory.
@@ -93,7 +93,7 @@ func (w *walker) visit(path string, d fs.DirEntry, walkErr error) error {
 	if rel == "." {
 		return nil
 	}
-	if excluded(d.Name()) {
+	if w.policy.Excluded(d.Name()) {
 		w.report.Excluded++
 		if d.IsDir() {
 			return filepath.SkipDir

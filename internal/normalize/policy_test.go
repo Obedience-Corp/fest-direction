@@ -40,8 +40,14 @@ func TestClassify(t *testing.T) {
 func TestV1Tables(t *testing.T) {
 	t.Parallel()
 	p := V1()
-	if p.Version != 1 || Version != 1 {
-		t.Fatalf("Version = %d / %d, want 1", p.Version, Version)
+	if p.Version != 1 || Current().Version != Version || Version != 2 {
+		t.Fatalf("versions: v1=%d current=%d const=%d", p.Version, Current().Version, Version)
+	}
+	for n, want := range map[int]bool{1: true, 2: true, 3: false} {
+		_, err := ForVersion(n)
+		if (err == nil) != want {
+			t.Fatalf("ForVersion(%d) err = %v", n, err)
+		}
 	}
 	for _, k := range p.Stripped() {
 		if _, dup := p.retain[k]; dup {

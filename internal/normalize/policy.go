@@ -7,13 +7,20 @@ package normalize
 import (
 	"errors"
 	"sort"
+	"strconv"
 	"strings"
+
+	"github.com/Obedience-Corp/fest-direction/internal/errs"
 )
 
-// Version of the normalization rule set. Any change to the tables below, the
-// non-frontmatter rules, or the exclude set bumps it — direction hashes are
-// comparable only within one version.
-const Version = 1
+// Version is the current normalization rule set. Any change to the tables, the
+// non-frontmatter rules, or the exclude set is a new version — direction hashes
+// are comparable only within one version, and every past version stays
+// available through ForVersion so old records can still be verified.
+const Version = 2
+
+// ErrUnknownVersion is returned by ForVersion for a version this build lacks.
+var ErrUnknownVersion = errors.New("unknown normalization version")
 
 // ErrUnknownField is returned for a fest_* frontmatter key that is in neither
 // table. Normalization is fail-closed: an unrecognized field means the schema
@@ -49,12 +56,15 @@ type Policy struct {
 	Version int
 	retain  map[string]struct{}
 	strip   map[string]struct{}
+	exclude map[string]struct{}
 }
 
-// V1 returns normalization_version 1.
+// V1 returns normalization_version 1 (2026-08-21): the original tables;
+// excludes .fest, .bundles, .direction, .git, .env.
 func V1() Policy {
 	return Policy{
 		Version: 1,
+		exclude: set(".fest", ".bundles", ".direction", ".git", ".env"),
 		retain: set(
 			// identity
 			"fest_type", "fest_id", "fest_ref", "fest_name", "fest_parent", "fest_order", "fest_created",
@@ -72,6 +82,37 @@ func V1() Policy {
 		// execution state and environment binding
 		strip: set("fest_status", "fest_updated", "fest_working_dir"),
 	}
+}
+
+// V2 returns normalization_version 2 (2026-08-21): V1 plus `results/`
+// directories excluded — testing and review outputs written into a sequence
+// are evidence of execution, not the plan.
+func V2() Policy {
+	p := V1()
+	p.Version = 2
+	p.exclude = set(".fest", ".bundles", ".direction", ".git", ".env", "results")
+	return p
+}
+
+// Current returns the rule set this build hashes with.
+func Current() Policy { return V2() }
+
+// ForVersion returns the rule set for a recorded normalization_version.
+func ForVersion(n int) (Policy, error) {
+	switch n {
+	case 1:
+		return V1(), nil
+	case 2:
+		return V2(), nil
+	default:
+		return Policy{}, errs.Wrap("normalization version "+strconv.Itoa(n), ErrUnknownVersion)
+	}
+}
+
+// Excluded reports whether a base name is never copied under p.
+func (p Policy) Excluded(name string) bool {
+	_, ok := p.exclude[name]
+	return ok
 }
 
 // Classify reports how key is treated under p. Keys outside the fest_
@@ -94,6 +135,9 @@ func (p Policy) Retained() []string { return sortedKeys(p.retain) }
 
 // Stripped returns the sorted strip table.
 func (p Policy) Stripped() []string { return sortedKeys(p.strip) }
+
+// Excludes returns the sorted exclude set.
+func (p Policy) Excludes() []string { return sortedKeys(p.exclude) }
 
 func set(keys ...string) map[string]struct{} {
 	m := make(map[string]struct{}, len(keys))

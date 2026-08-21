@@ -12,16 +12,16 @@ drift the fixtures.
 
 Expected direction-hash behavior (phase 1):
 
-- **v1 normalization:** baseline and mutated yield the **same** direction hash:
-  `sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a` (recorded 2026-08-21 after v1 was finalized with canonical frontmatter, asserted by `TestGoldenV1`).
+- **Current normalization (v2):** baseline and mutated yield the **same** direction hash:
+  `sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a` (recorded 2026-08-21; identical under v1 and v2 because this fixture has no `results/` directories; asserted by `TestGoldenCurrent`).
 - **PoC rules** (design's line-wise procedure: drop `.fest/`, delete
   `^fest_status:` / `^fest_updated:` lines from every `*.md`, reset
   `TODO.md` checkboxes, pack): both yield
   `sha256:50ddaea058b7b8ee46f89422da257d80ccb863ca640d887474544c752cdc854a`
   (reproduced with `fest pack` 2026-08-21; asserted by the PoC reproduction
   test). This is a pipeline sanity
-  check, not the v1 spec; v1 also strips `fest.yaml` `status_history` and
-  `fest_working_dir`.
+  check, not the current spec; v1+ also strips `fest.yaml` `status_history` and
+  `fest_working_dir` and canonicalizes frontmatter.
 
 | `workitem-note/` | Non-festival kind (`.workitem` type `note`), no execution state | direction hash == snapshot id by construction |
 

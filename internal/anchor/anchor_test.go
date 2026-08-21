@@ -24,14 +24,14 @@ func TestAnchorRefusesUncommittedDirection(t *testing.T) {
 	if err := os.WriteFile(task, append(b, []byte("\n- [ ] a requirement added after anchoring\n")...), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, _, err := Anchor(context.Background(), repo, wu, normalize.V1(), Options{})
+	_, _, err := Anchor(context.Background(), repo, wu, normalize.Current(), Options{})
 	if !errors.Is(err, ErrDirtyTree) {
 		t.Fatalf("err = %v, want ErrDirtyTree", err)
 	}
 	if !strings.Contains(err.Error(), "01_link_project.md") {
 		t.Fatalf("error does not name the dirty path: %v", err)
 	}
-	rec, _, err := Anchor(context.Background(), repo, wu, normalize.V1(), Options{Force: true, Now: fixedClock})
+	rec, _, err := Anchor(context.Background(), repo, wu, normalize.Current(), Options{Force: true, Now: fixedClock})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestAnchorCleanWorkUnit(t *testing.T) {
 	t.Parallel()
 	repo, wu := repoWithFixture(t)
 	ctx := context.Background()
-	rec, res, err := Anchor(ctx, repo, wu, normalize.V1(), Options{Now: fixedClock, Tool: Tool{Name: "direction", Version: "test"}})
+	rec, res, err := Anchor(ctx, repo, wu, normalize.Current(), Options{Now: fixedClock, Tool: Tool{Name: "direction", Version: "test"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAnchorCleanWorkUnit(t *testing.T) {
 		t.Fatalf("anchoring dirtied the work unit: %v", paths)
 	}
 	// A second anchor appends rather than replaces.
-	again, _, err := Anchor(ctx, repo, wu, normalize.V1(), Options{Now: fixedClock})
+	again, _, err := Anchor(ctx, repo, wu, normalize.Current(), Options{Now: fixedClock})
 	if err != nil || len(again.Events) != 2 {
 		t.Fatalf("second anchor: %+v, %v", again, err)
 	}
@@ -79,7 +79,7 @@ func TestAnchorCancelled(t *testing.T) {
 	repo, wu := repoWithFixture(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, _, err := Anchor(ctx, repo, wu, normalize.V1(), Options{}); !errors.Is(err, context.Canceled) {
+	if _, _, err := Anchor(ctx, repo, wu, normalize.Current(), Options{}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled", err)
 	}
 }
@@ -97,7 +97,7 @@ func TestAnchorAllowsStateOnlyChanges(t *testing.T) {
 	if dirty, _, _ := repo.Dirty(ctx, "festivals/dashboard-DA0001"); !dirty {
 		t.Fatal("precondition: tree should be dirty")
 	}
-	rec, res, err := Anchor(ctx, repo, wu, normalize.V1(), Options{Now: fixedClock})
+	rec, res, err := Anchor(ctx, repo, wu, normalize.Current(), Options{Now: fixedClock})
 	if err != nil {
 		t.Fatalf("state-only dirty tree was refused: %v", err)
 	}
@@ -119,11 +119,11 @@ func TestHeadTreeMatchesWorkingTree(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cleanup()
-	a, err := direction.Hash(ctx, committed, normalize.V1())
+	a, err := direction.Hash(ctx, committed, normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := direction.Hash(ctx, wu, normalize.V1())
+	b, err := direction.Hash(ctx, wu, normalize.Current())
 	if err != nil {
 		t.Fatal(err)
 	}

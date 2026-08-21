@@ -55,7 +55,7 @@ func countLines(t *testing.T, root string, prefixes ...string) int {
 			return err
 		}
 		if d.IsDir() {
-			if excluded(d.Name()) {
+			if Current().Excluded(d.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
