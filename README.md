@@ -17,6 +17,7 @@ Phase 1 of the build festival (`direction-archive-DA0004`) is in progress. Verbs
 |------|-------|------|
 | `hash` | **available** | Normalize a work unit (strip `fest_status`, `fest_updated`, `.fest/`, checkbox state, `status_history`) and hash it with the SPEC §7.1 algorithm; also reports the snapshot `bundle.id` |
 | `anchor` | **available** | Hash HEAD's version of the work unit and append an event to `.direction/anchors/`; refuses an uncommitted plan change; binds to fest's `pre_task_start` (see `docs/anchoring.md`) |
+| `hook` | **available** | `commit-msg` trailer injection from the staged tree; `install` / `uninstall` the per-clone shim (see `docs/anchoring.md`) |
 | `attest` | 3 | Emit an in-toto Statement v1 with a versioned direction-record predicate |
 | `verify` | 3 | Recompute both hashes from a bundle and check them against a statement |
 

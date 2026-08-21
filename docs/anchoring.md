@@ -8,7 +8,7 @@ begins, and carried on every commit. Implemented in `internal/anchor`.
 | Moment | Mechanism | Enforced? | Hash |
 |---|---|---|---|
 | A task starts (festival and ritual kinds) | `pre_task_start` hook → `direction anchor .` | **Yes** — by `fest.yaml` configuration with `fail: closed`: a failed anchor blocks the task start | direction, of HEAD's tree |
-| Every commit | commit-msg hook → `Festival-Direction` / `Festival-Normalization` trailers | **Yes**, per clone, once `direction hook install` has run (sequence `02_commit_trailers`) | direction, of the staged tree |
+| Every commit | commit-msg hook → `Festival-Direction` / `Festival-Normalization` trailers | **Yes**, per clone, once `direction hook install` has run (see *Commit trailers*) | direction, of the staged tree |
 | Work begins on a non-festival kind (explore, design, intent, note) | manual `direction anchor <path>`, or the first trailer-bearing commit | No — discipline | direction |
 | Completion | archive publish (deferred, not in this festival) | — | snapshot |
 
@@ -101,6 +101,62 @@ task's whole frontmatter on completion (flow sequences become block
 sequences, blank lines appear, the trailing newline changes). v1 normalization
 was finalized with canonical frontmatter and separators before any record was
 committed; the single pre-finalization record was discarded rather than carried.
+
+## Commit trailers
+
+Every commit in the repository that holds the plan carries two trailers:
+
+```text
+Festival-Direction: sha256:…
+Festival-Normalization: 2
+```
+
+A `commit-msg` hook writes them from the **staged** version of the work unit
+(`git write-tree` → `git archive`), so each commit states exactly the plan it
+was made under — including commits that do not touch the plan. That is the
+point: the plan in force is recorded on the work done under it. Trailers join
+an existing trailer block (`Signed-off-by` and friends are kept), sit before
+git's comment tail, and are replaced rather than duplicated on amend.
+
+### Install
+
+```console
+$ direction hook install --repo <repo> --work-unit <path to the work unit>
+```
+
+writes `.git/hooks/commit-msg` (honouring `core.hooksPath`) and
+`.direction/config.yaml` with `default_work_unit`. Commit the config; the shim
+is per clone. A foreign `commit-msg` hook is refused; `--force` keeps it as
+`commit-msg.before-direction` and chains it ahead of the shim.
+`direction hook uninstall` reverses both. Inside the hook the work unit comes
+from `--work-unit`, then `$DIRECTION_WORK_UNIT`, then the config; with none
+configured the hook is a no-op, so unrelated repositories are never blocked.
+
+The hook fails closed: a missing binary, an unknown `fest_*` field, or a git
+failure aborts the commit with a message. `git commit --no-verify` bypasses
+it — and leaves a commit without trailers, which is itself visible.
+
+### Campaign wiring decision
+
+`campaign.yaml` declares `hooks.commit_message: ob commit` — the message
+*writer* that `fest commit --auto-write` runs. Two ways to put trailers on the
+campaign-root commits `fest commit` creates for festival files:
+
+- **A — a git `commit-msg` hook in the campaign root (chosen).** Enforced for
+  every commit in that repository, whatever tool makes it; no change to `ob`,
+  `fest`, or `camp`.
+- **B — chain `direction` into `ob commit`.** Requires changing `ob`; out of
+  scope. Recorded as an upstream proposal, together with a `--trailer` flag
+  for `fest commit`.
+
+Project repositories (here `projects/fest-direction`) do not carry trailers:
+the work unit must live in the same repository as the commit. Their commits
+are bound through the campaign-root commit that moves the submodule pointer —
+that commit carries the trailer.
+
+### Verification — campaign root, 2026-08-21
+
+<!-- transcript -->
 
 ## What this proves
 

@@ -18,30 +18,45 @@ import (
 // the work unit; bundles cannot contain them (SPEC §4.3).
 var ErrSymlinkInHistory = errors.New("committed tree contains a symlink")
 
-// headTree materializes HEAD's version of the repo-relative path rel into a
-// private temp directory and returns the work-unit root inside it. The caller
-// must invoke cleanup. This is how anchoring hashes exactly what a reader can
-// later retrieve, regardless of the working tree.
+// headTree materializes HEAD's version of the repo-relative path rel. This is
+// how anchoring hashes exactly what a reader can later retrieve, regardless
+// of the working tree.
 func (r Repo) headTree(ctx context.Context, rel string) (string, func(), error) {
+	return r.treeAt(ctx, rel, "HEAD")
+}
+
+// indexTree materializes the staged version of rel — what a commit in
+// progress will contain — by writing the index as a tree object first.
+func (r Repo) indexTree(ctx context.Context, rel string) (string, func(), error) {
+	out, err := runGit(ctx, r.Root, "write-tree")
+	if err != nil {
+		return "", nil, err
+	}
+	return r.treeAt(ctx, rel, strings.TrimSpace(out))
+}
+
+// treeAt extracts treeish:rel into a private temp directory and returns the
+// work-unit root inside it. The caller must invoke cleanup.
+func (r Repo) treeAt(ctx context.Context, rel, treeish string) (string, func(), error) {
 	if err := ctx.Err(); err != nil {
 		return "", nil, err
 	}
-	tmp, err := os.MkdirTemp("", "direction-head-*")
+	tmp, err := os.MkdirTemp("", "direction-tree-*")
 	if err != nil {
 		return "", nil, errs.Wrap("head tree: temp dir", err)
 	}
 	cleanup := func() { _ = os.RemoveAll(tmp) }
-	cmd := exec.CommandContext(ctx, "git", "-C", r.Root, "archive", "--format=tar", "HEAD", "--", rel)
+	cmd := exec.CommandContext(ctx, "git", "-C", r.Root, "archive", "--format=tar", treeish, "--", rel)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		cleanup()
-		return "", nil, errs.Wrap("head tree: pipe", err)
+		return "", nil, errs.Wrap("tree: pipe", err)
 	}
 	if err := cmd.Start(); err != nil {
 		cleanup()
-		return "", nil, errs.Wrap("head tree: start git archive", err)
+		return "", nil, errs.Wrap("tree: start git archive", err)
 	}
 	extractErr := extractTar(stdout, tmp)
 	waitErr := cmd.Wait()
@@ -51,7 +66,7 @@ func (r Repo) headTree(ctx context.Context, rel string) (string, func(), error) 
 	}
 	if waitErr != nil {
 		cleanup()
-		return "", nil, errs.Wrap("git archive HEAD -- "+rel, &gitFailure{args: "archive HEAD -- " + rel, stderr: strings.TrimSpace(stderr.String()), code: exitCode(waitErr)})
+		return "", nil, errs.Wrap("git archive "+treeish+" -- "+rel, &gitFailure{args: "archive " + treeish + " -- " + rel, stderr: strings.TrimSpace(stderr.String()), code: exitCode(waitErr)})
 	}
 	if extractErr != nil {
 		cleanup()
