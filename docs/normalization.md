@@ -9,7 +9,7 @@ progresses. Implemented in `internal/normalize`; the direction hash is the
 
 | `normalization_version` | Date | Change |
 |---|---|---|
-| 1 | 2026-08-21 | Initial rule set, derived from the design's `normalization-spec.md`; `.direction/` added to the exclude set the same day, before any anchor existed |
+| 1 | 2026-08-21 | Initial rule set, derived from the design's `normalization-spec.md`. Finalized the same day, before any anchor entered history: `.direction/` added to the exclude set; frontmatter and `fest.yaml` made **canonical** (sorted keys, block style, no comments) and `.md` files end with exactly one newline — bring-up showed fest re-serializes a task's frontmatter on every status change |
 
 Any change to the tables or rules below is a new version. Direction hashes are
 comparable only within one version, and the version travels with every hash
@@ -65,13 +65,20 @@ so renaming or reordering is a direction change by construction — `fest
 renumber` yields a new direction hash, and prior anchors are expected to
 mismatch it.
 
-## Determinism
+## Canonical form
 
 Frontmatter and `fest.yaml` are parsed with the `yaml.v3` Node API and
-re-encoded with a two-space indent. Key order and comments survive; quoting may
-differ cosmetically from what `fest` wrote. That is fine because every hash
-goes through the same normalizer — the only requirement is that equal input
-yields equal bytes, which the test suite asserts by normalizing twice.
+re-encoded in one canonical shape: mapping keys sorted, block style everywhere,
+comments dropped, two-space indent. Values and nesting are untouched. The
+fence/body separator is exactly one blank line, and `.md` files end with
+exactly one newline.
+
+This is deliberate, not cosmetic. `fest` rewrites a task document's frontmatter
+on every status change — flow sequences become block sequences, blank lines
+appear, trailing whitespace changes — and none of that is direction. Hashing
+frontmatter semantically is what lets a `pre_task_start` anchor keep matching
+HEAD while tasks complete. Equal input yields equal bytes; the suite asserts it
+by normalizing twice and by replaying fest's exact rewrite.
 
 ## What normalization is not
 

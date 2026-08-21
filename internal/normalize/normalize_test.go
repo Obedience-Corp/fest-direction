@@ -139,3 +139,31 @@ func TestNormalizeDeterministic(t *testing.T) {
 		}
 	}
 }
+
+// TestNormalizeFestRewriteIsStateOnly reproduces what fest does to a task doc
+// on completion (observed 2026-08-21): status flip, fest_updated added, the
+// hooks block re-serialized from flow to block style with a blank line, and a
+// changed trailing newline. None of it is direction.
+func TestNormalizeFestRewriteIsStateOnly(t *testing.T) {
+	t.Parallel()
+	before := "---\nfest_type: task\nfest_id: 01_x.md\nfest_status: pending\nfest_tracking: true\nhooks:\n  start:\n    pre: [direction_anchor]\n---\n\n# Task\n\n- [ ] done when"
+	after := "---\nfest_type: task\nfest_id: 01_x.md\nfest_status: completed\nfest_updated: 2026-08-21T04:19:23.527557-06:00\nfest_tracking: true\nhooks:\n  start:\n    pre:\n      - direction_anchor\n\n---\n\n# Task\n\n- [ ] done when\n"
+	withComment := "---\n# written by a template\nfest_tracking: true\nhooks: {start: {pre: [direction_anchor]}}\nfest_id: 01_x.md\nfest_type: task\n---\n\n# Task\n\n- [ ] done when\n\n\n"
+	extraSeparator := "---\nfest_type: task\nfest_id: 01_x.md\nfest_tracking: true\nhooks:\n  start:\n    pre:\n      - direction_anchor\n\n---\n\n\n# Task\n\n- [ ] done when\n"
+	var outs [][]byte
+	for _, doc := range []string{before, after, withComment, extraSeparator} {
+		out, _, err := filterFrontmatter([]byte(doc), V1())
+		if err != nil {
+			t.Fatal(err)
+		}
+		outs = append(outs, trimEOF(out))
+	}
+	for i := 1; i < len(outs); i++ {
+		if string(outs[i]) != string(outs[0]) {
+			t.Fatalf("variant %d normalizes differently:\n%s\n---\n%s", i, outs[0], outs[i])
+		}
+	}
+	if !strings.Contains(string(outs[0]), "hooks:\n  start:\n    pre:\n      - direction_anchor\n") {
+		t.Fatalf("canonical form unexpected:\n%s", outs[0])
+	}
+}

@@ -13,7 +13,7 @@ drift the fixtures.
 Expected direction-hash behavior (phase 1):
 
 - **v1 normalization:** baseline and mutated yield the **same** direction hash:
-  `sha256:4ee0bd159d49c964e342148f9da8618d1690bcf5bce38c48db87c6ce88041ba9` (recorded 2026-08-21, asserted by `TestGoldenV1`).
+  `sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a` (recorded 2026-08-21 after v1 was finalized with canonical frontmatter, asserted by `TestGoldenV1`).
 - **PoC rules** (design's line-wise procedure: drop `.fest/`, delete
   `^fest_status:` / `^fest_updated:` lines from every `*.md`, reset
   `TODO.md` checkboxes, pack): both yield

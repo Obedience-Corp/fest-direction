@@ -20,7 +20,8 @@ func TestAnchorRefusesUncommittedDirection(t *testing.T) {
 	repo, wu := repoWithFixture(t)
 	task := filepath.Join(wu, "001_IMPLEMENT", "01_data_layer", "01_link_project.md")
 	b, _ := os.ReadFile(task)
-	if err := os.WriteFile(task, append(b, '\n'), 0o644); err != nil {
+	// A bare trailing newline is not a plan change (EOF is canonicalized); a new requirement is.
+	if err := os.WriteFile(task, append(b, []byte("\n- [ ] a requirement added after anchoring\n")...), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	_, _, err := Anchor(context.Background(), repo, wu, normalize.V1(), Options{})

@@ -1,6 +1,7 @@
 package normalize
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io/fs"
@@ -131,14 +132,14 @@ func (w *walker) file(rel string) error {
 	return nil
 }
 
-// apply runs the rules in order: frontmatter, TODO checkboxes, fest.yaml.
+// apply runs the rules in order: frontmatter + EOF, TODO checkboxes, fest.yaml.
 func (w *walker) apply(rel string, data []byte) ([]byte, error) {
 	if filepath.Ext(rel) == ".md" {
 		out, n, err := filterFrontmatter(data, w.policy)
 		if err != nil {
 			return nil, errs.Wrap("normalize "+rel, err)
 		}
-		data = out
+		data = trimEOF(out)
 		w.report.FieldsStripped += n
 	}
 	if filepath.Base(rel) == "TODO.md" {
@@ -155,4 +156,14 @@ func (w *walker) apply(rel string, data []byte) ([]byte, error) {
 		w.report.StatusHistoryStripped = removed
 	}
 	return data, nil
+}
+
+// trimEOF ends a document with exactly one newline. Editors and fest's own
+// writer disagree about trailing whitespace; none of it is direction.
+func trimEOF(b []byte) []byte {
+	t := bytes.TrimRight(b, " \t\r\n")
+	if len(t) == 0 {
+		return t
+	}
+	return append(t, '\n')
 }

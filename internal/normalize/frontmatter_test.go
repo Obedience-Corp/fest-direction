@@ -49,7 +49,7 @@ func TestFilterFrontmatter(t *testing.T) {
 		{name: "no frontmatter is untouched", doc: "# Title\n\nfest_status: not frontmatter\n", wantUnchanged: true},
 		{name: "unterminated fence is not frontmatter", doc: "---\nfest_status: pending\nbody", wantUnchanged: true},
 		{name: "state keys stripped, direction and body kept", doc: "---\nfest_type: task\nfest_status: pending\nfest_updated: 2026-01-01\nfest_working_dir: projects/x\n---\n\n# Task\n\n- [x] done\n", wantStripped: 3, wantContains: []string{"fest_type: task", "\n---\n\n# Task\n\n- [x] done\n"}, wantAbsent: []string{"fest_status", "fest_updated", "fest_working_dir"}},
-		{name: "template metadata and comments survive", doc: "---\n# Template metadata\nid: QUALITY_GATE_TESTING\naliases:\n  - testing-verify\nfest_type: gate\nfest_status: pending\n---\n\n# Task: Testing\n", wantStripped: 1, wantContains: []string{"# Template metadata", "id: QUALITY_GATE_TESTING", "- testing-verify", "fest_type: gate"}, wantAbsent: []string{"fest_status"}},
+		{name: "template metadata survives, comments are canonicalized away", doc: "---\n# Template metadata\nid: QUALITY_GATE_TESTING\naliases:\n  - testing-verify\nfest_type: gate\nfest_status: pending\n---\n\n# Task: Testing\n", wantStripped: 1, wantContains: []string{"id: QUALITY_GATE_TESTING", "- testing-verify", "fest_type: gate"}, wantAbsent: []string{"fest_status", "# Template metadata"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

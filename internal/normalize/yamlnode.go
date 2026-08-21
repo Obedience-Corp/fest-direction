@@ -22,8 +22,10 @@ func decodeMapping(b []byte, sentinel error, what string) (*yaml.Node, *yaml.Nod
 	return &root, root.Content[0], nil
 }
 
-// encodeNode renders a document node deterministically (two-space indent).
+// encodeNode renders a document node in canonical form (see canonicalize)
+// with a two-space indent.
 func encodeNode(n *yaml.Node, what string) ([]byte, error) {
+	canonicalize(n)
 	var buf bytes.Buffer
 	enc := yaml.NewEncoder(&buf)
 	enc.SetIndent(2)

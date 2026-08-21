@@ -19,7 +19,7 @@ const (
 	// goldenV1Direction is the v1 direction hash of dashboard-DA0001. It is
 	// recorded in testdata/fixtures/README.md; any normalization drift fails
 	// here loudly instead of silently moving every anchor.
-	goldenV1Direction = "sha256:4ee0bd159d49c964e342148f9da8618d1690bcf5bce38c48db87c6ce88041ba9"
+	goldenV1Direction = "sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a"
 )
 
 func TestHashErrors(t *testing.T) {

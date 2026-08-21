@@ -36,10 +36,11 @@ func splitFrontmatter(doc []byte) (fm, body []byte, ok bool) {
 	return rest[:i+1], after, true
 }
 
-// filterFrontmatter removes stripped fest_* keys from doc's frontmatter and
-// returns the rewritten document, the number of keys stripped, and an error
-// for unknown fest_* keys or a malformed block. Documents without frontmatter
-// are returned unchanged.
+// filterFrontmatter removes stripped fest_* keys from doc's frontmatter,
+// re-encodes the block canonically, normalizes the fence/body separator to one
+// blank line, and returns the rewritten document, the number of keys stripped,
+// and an error for unknown fest_* keys or a malformed block. Documents without
+// frontmatter are returned unchanged.
 func filterFrontmatter(doc []byte, p Policy) ([]byte, int, error) {
 	fm, body, ok := splitFrontmatter(doc)
 	if !ok {
@@ -57,11 +58,17 @@ func filterFrontmatter(doc []byte, p Policy) ([]byte, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	out := make([]byte, 0, len(fenceOpen)+len(encoded)+3+len(body))
+	// Canonical separator: the fence, one blank line, then the body. Writers
+	// disagree about how many newlines follow the fence; none of them matter.
+	body = bytes.TrimLeft(body, "\n")
+	out := make([]byte, 0, len(fenceOpen)+len(encoded)+5+len(body))
 	out = append(out, fenceOpen...)
 	out = append(out, encoded...)
-	out = append(out, "---"...)
-	out = append(out, body...)
+	out = append(out, "---\n"...)
+	if len(body) > 0 {
+		out = append(out, '\n')
+		out = append(out, body...)
+	}
 	return out, stripped, nil
 }
 
