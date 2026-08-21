@@ -28,31 +28,54 @@ repository (`--no-color` output; a real session is styled):
 
 ```console
 $ direction hash festivals/dashboard-DA0001
-✗ hash: stat festivals/dashboard-DA0001: stat festivals/dashboard-DA0001: no such file or directory
+direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+normalization v2
+snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
+kind         festival
+subject      DA0001
 
 $ direction anchor festivals/dashboard-DA0001
-✗ open repo: stat festivals/dashboard-DA0001: no such file or directory
+direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+normalization v2
+snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
+head         57f44d97bfb72929bf143811873031f78f72c321
+record       .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a.json
+events       1
+⚠ commit .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a.json with your next commit — the record is the evidence
 
 $ direction hook install --work-unit festivals/dashboard-DA0001
-✓ installed /private/var/folders/9d/nyc358s50g7591g74wjx8pn40000gn/T/tmp.a8NWndem55/.git/hooks/commit-msg
+✓ installed .git/hooks/commit-msg
 
 $ git add -A && git commit -m "[FE-DA0001] work under the plan"
-✗ git archive a74d32a179471fea2ee6592b298e064416bb769e -- festivals/dashboard-DA0001: git archive a74d32a179471fea2ee6592b298e064416bb769e -- festivals/dashboard-DA0001: fatal: pathspec 'festivals/dashboard-DA0001' did not match any files
+$ git log -1 --format=%B | git interpret-trailers --parse
+Festival-Direction: sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+Festival-Normalization: 2
 
 $ direction attest festivals/dashboard-DA0001 --anchors-from .
-✗ open festivals/dashboard-DA0001: stat festivals/dashboard-DA0001: no such file or directory
+subject      DA0001.festival
+digest       sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
+direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+normalization v2
+anchors      3
+written      festivals/dashboard-DA0001.intoto.json
 
 $ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
-✗ statement  verify: read festivals/dashboard-DA0001.intoto.json: malformed statement
-open festivals/dashboard-DA0001.intoto.json: no such file or directory
-✗ verification failed: statement
+✓ statement  https://in-toto.io/Statement/v1
+✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
+✓ normalization-version  2
+✓ snapshot  sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
+✓ direction  sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+✓ verified
 
 $ sed -i "" "s/fest_status: pending/fest_status: completed/" festivals/dashboard-DA0001/001_IMPLEMENT/01_data_layer/01_link_project.md   # a task completes
-sed: festivals/dashboard-DA0001/001_IMPLEMENT/01_data_layer/01_link_project.md: No such file or directory
 $ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
-✗ statement  verify: read festivals/dashboard-DA0001.intoto.json: malformed statement
-open festivals/dashboard-DA0001.intoto.json: no such file or directory
-✗ verification failed: statement
+✓ statement  https://in-toto.io/Statement/v1
+✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
+✓ normalization-version  2
+✗ snapshot  want sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e got sha256:6e7037e1edfb9091b86a27d0af06ae507a84c84330556f0381a198aefc88006f
+✓ direction  sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
+⚠ execution state changed; direction intact
+✗ verification failed: snapshot
 ```
 
 `snapshot` moves as tasks complete; `direction` does not — that is the whole
