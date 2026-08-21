@@ -1,0 +1,18 @@
+# Binaries (all go in bin/)
+bin/
+dist/
+
+# Coverage
+coverage.out
+coverage.html
+**/*.coverprofile
+
+# Local workspace
+go.work
+go.work.sum
+.gocache/
+
+# fest pack writes transfer records into any tree it packs; fixtures must stay byte-stable
+testdata/**/.bundles/
+
+.DS_Store

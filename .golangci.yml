@@ -1,0 +1,22 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters:
+  default: standard
+  enable:
+    - forbidigo
+  settings:
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: '^fmt\.Errorf$'
+          msg: "use errs.Wrap(op, err) with a sentinel — fmt.Errorf is banned in production code"
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - forbidigo
