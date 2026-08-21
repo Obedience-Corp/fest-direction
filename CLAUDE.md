@@ -29,6 +29,9 @@ just golden   # direction-hash fixture reproduction (phase 1 acceptance)
 
 - `context.Context` first on every I/O path; check `ctx.Err()` before long work
 - No `fmt.Errorf` — `errs.Wrap(op, err)` with a sentinel; dynamic detail goes in `op`
+- Domain sentinels live in the package that owns them (`normalize.ErrUnknownField`,
+  `normalize.ErrDestNotEmpty`, …) and are always wrapped with `errs.Wrap`;
+  `internal/errs` holds only cross-cutting sentinels
 - Never reimplement SPEC §7.1 — call `festivalbundle.PayloadContentID`
 - Normalization is allowlist + fail-closed on unknown `fest_*` fields; any rule
   change bumps `normalization_version`; normalize on-disk bytes, never
