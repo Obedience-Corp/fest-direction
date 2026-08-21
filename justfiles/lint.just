@@ -24,6 +24,15 @@ vet:
 golangci:
     golangci-lint run ./...
 
+# Fail if README or docs use a term the claims policy forbids (docs/claims.md)
+[no-cd]
+claims:
+    #!/usr/bin/env sh
+    set -eu
+    hits="$(grep -rIinE 'tamper-proof|trustless|provably correct|immutable audit trail|prompt archive|reproducible ai' README.md docs/ | grep -v '<!-- avoided -->' || true)"
+    if [ -n "$hits" ]; then echo "forbidden claim wording:"; echo "$hits"; exit 1; fi
+    echo "claims: clean"
+
 # Everything
 [no-cd]
-all: fmt-check vet golangci
+all: fmt-check vet golangci claims

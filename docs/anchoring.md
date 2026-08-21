@@ -156,7 +156,20 @@ that commit carries the trailer.
 
 ### Verification — campaign root, 2026-08-21
 
-<!-- transcript -->
+```console
+$ direction hook install --repo . --work-unit festivals/active/direction-archive-DA0004
+✓ installed .git/hooks/commit-msg
+$ fest commit -m "anchor: commit trailers — …"      # creates the campaign-root commit fc3e7978f7dd
+$ git log -1 --format=%B | git interpret-trailers --parse
+Festival-Direction: sha256:0433491da2db54647743f2e8835544cb78d4a8f46e593ec74948d52a8dc84417
+Festival-Normalization: 2
+$ direction hash festivals/active/direction-archive-DA0004
+direction    sha256:0433491da2db54647743f2e8835544cb78d4a8f46e593ec74948d52a8dc84417
+```
+
+The trailer on the campaign-root commit equals the direction hash of the
+festival tree in that commit, and equals the `pre_task_start` record
+`.direction/anchors/sha256-0433491da2db54647743f2e8835544cb78d4a8f46e593ec74948d52a8dc84417.json`.
 
 ## What this proves
 

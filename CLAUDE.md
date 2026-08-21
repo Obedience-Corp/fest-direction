@@ -21,8 +21,11 @@ just golden   # direction-hash fixture reproduction (phase 1 acceptance)
 - `internal/errs` — THE error framework: sentinels + `Wrap(op, err)`
 - `internal/ui` — shared brand palette → Lip Gloss styles; `Printer`
 - `internal/version` — ldflags-injected build metadata
-- Domain packages land by phase: `normalize`, `direction` (phase 1); `anchor`
-  (phase 2); `attest` (phase 3); `bundle` adapter as needed
+- `internal/normalize` — versioned, canonical normalization (`V1`, `V2`, `Current`, `ForVersion`)
+- `internal/direction` — `Hash`: direction hash = bundle.id of the normalized tree, via `festivalbundle.Pack`
+- `internal/anchor` — git state, HEAD-tree anchoring, records, trailers, commit-msg shim
+- `internal/attest` — in-toto Statement v1, direction-record predicate, `Attest`, `Verify`
+- Verbs: `hash`, `anchor`, `hook {commit-msg,install,uninstall}`, `attest`, `verify`
 - `testdata/fixtures` — byte-stable festival trees with known hashes
 
 ## Rules
@@ -40,8 +43,7 @@ just golden   # direction-hash fixture reproduction (phase 1 acceptance)
   refuse a dirty tree unless `--force`
 - Upstream: no changes to `fest`, `camp`, or `obey-shared` from here; proposals
   go to WI-93268b (obedience-growth-rd)
-- Claims: "tamper-evident", never "tamper-proof", "trustless", "immutable audit
-  trail", or "provably correct"
+- Claims: follow `docs/claims.md`; `just checks claims` enforces the avoided-terms list
 - Dependencies: stdlib, `obey-shared`, cobra, lipgloss, `yaml.v3`, `x/term`.
   Anything else needs explicit approval
 - Files under 500 lines, functions under 50; dependency injection, no globals;

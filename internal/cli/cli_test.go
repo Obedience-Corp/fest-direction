@@ -168,3 +168,41 @@ func TestAnchorCommand(t *testing.T) {
 		t.Fatal("anchoring outside a repo should fail")
 	}
 }
+
+func TestAttestAndVerifyCommands(t *testing.T) {
+	t.Parallel()
+	dir := fixture("dashboard-DA0001-baseline")
+	stmt := filepath.Join(t.TempDir(), "s.intoto.json")
+	out, err := run(context.Background(), "--no-color", "attest", dir, "-o", stmt)
+	if err != nil || !strings.Contains(out, "written") || !strings.Contains(out, "DA0001.festival") {
+		t.Fatalf("attest: %v\n%s", err, out)
+	}
+	if _, err := run(context.Background(), "--no-color", "attest", dir, "-o", stmt); err == nil {
+		t.Fatal("second attest without --force should refuse")
+	}
+	out, err = run(context.Background(), "--no-color", "verify", dir, "--statement", stmt)
+	if err != nil || !strings.Contains(out, "✓ verified") {
+		t.Fatalf("verify: %v\n%s", err, out)
+	}
+	if _, err := run(context.Background(), "--no-color", "verify", dir); err == nil {
+		t.Fatal("verify without --statement should fail")
+	}
+	// State-only change on a copy: snapshot moves, direction intact.
+	cp := filepath.Join(t.TempDir(), "cp")
+	if err := os.CopyFS(cp, os.DirFS(dir)); err != nil {
+		t.Fatal(err)
+	}
+	task := filepath.Join(cp, "001_IMPLEMENT", "01_data_layer", "01_link_project.md")
+	b, _ := os.ReadFile(task)
+	if err := os.WriteFile(task, []byte(strings.Replace(string(b), "fest_status: pending", "fest_status: completed", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err = run(context.Background(), "--no-color", "verify", cp, "--statement", stmt)
+	if err == nil || !strings.Contains(out, "✗ snapshot") || !strings.Contains(out, "direction intact") {
+		t.Fatalf("state-only verify: err=%v\n%s", err, out)
+	}
+	out, err = run(context.Background(), "verify", cp, "--statement", stmt, "--json")
+	if err == nil || !strings.Contains(out, `"state_only": true`) {
+		t.Fatalf("json report: err=%v\n%s", err, out)
+	}
+}
