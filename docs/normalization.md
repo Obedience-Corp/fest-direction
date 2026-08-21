@@ -9,7 +9,7 @@ progresses. Implemented in `internal/normalize`; the direction hash is the
 
 | `normalization_version` | Date | Change |
 |---|---|---|
-| 1 | 2026-08-21 | Initial rule set, derived from the design's `normalization-spec.md` |
+| 1 | 2026-08-21 | Initial rule set, derived from the design's `normalization-spec.md`; `.direction/` added to the exclude set the same day, before any anchor existed |
 
 Any change to the tables or rules below is a new version. Direction hashes are
 comparable only within one version, and the version travels with every hash
@@ -55,7 +55,7 @@ anchor without anyone noticing.
 | Path | Rule |
 |------|------|
 | `.fest/` | Excluded entirely — `progress_events.jsonl`, `status_history.json` are pure execution trace |
-| `.bundles/`, `.git/`, `.env` | Excluded — transfer records, VCS internals, secrets |
+| `.bundles/`, `.direction/`, `.git/`, `.env` | Excluded — transfer records, anchor records (evidence about the plan, not the plan), VCS internals, secrets |
 | `TODO.md` (any depth) | `- [x]` / `- [X]` → `- [ ]`; all text retained |
 | `fest.yaml` (root) | `metadata.status_history` removed; everything else retained |
 | Symlinks | Rejected (SPEC §4.3) |

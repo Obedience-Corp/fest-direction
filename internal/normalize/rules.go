@@ -11,13 +11,15 @@ var ErrInvalidFestYAML = errors.New("invalid fest.yaml")
 // checkboxRE matches a checked Markdown task box at the start of a list item.
 var checkboxRE = regexp.MustCompile(`(?m)^(\s*[-*] )\[[xX]\]`)
 
-// excludedNames are never copied: execution trace, transfer records, VCS
-// internals, and secrets. Matched by base name at any depth.
+// excludedNames are never copied: execution trace, transfer records, anchor
+// records (evidence about the plan, not the plan), VCS internals, and
+// secrets. Matched by base name at any depth.
 var excludedNames = map[string]struct{}{
-	".fest":    {},
-	".bundles": {},
-	".git":     {},
-	".env":     {},
+	".fest":      {},
+	".bundles":   {},
+	".direction": {},
+	".git":       {},
+	".env":       {},
 }
 
 // resetCheckboxes turns "- [x]" / "- [X]" into "- [ ]" and reports how many

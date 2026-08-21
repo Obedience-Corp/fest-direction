@@ -86,7 +86,7 @@ func TestResetCheckboxes(t *testing.T) {
 
 func TestExcluded(t *testing.T) {
 	t.Parallel()
-	for name, want := range map[string]bool{".fest": true, ".bundles": true, ".git": true, ".env": true, "fest.yaml": false, "TODO.md": false, ".envrc": false} {
+	for name, want := range map[string]bool{".fest": true, ".bundles": true, ".direction": true, ".git": true, ".env": true, "fest.yaml": false, "TODO.md": false, ".envrc": false} {
 		if got := excluded(name); got != want {
 			t.Errorf("excluded(%q) = %v, want %v", name, got, want)
 		}

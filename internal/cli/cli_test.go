@@ -5,10 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/Obedience-Corp/fest-direction/internal/anchor"
 	"github.com/Obedience-Corp/fest-direction/internal/direction"
 )
 
@@ -112,5 +115,56 @@ func TestHashCommandJSON(t *testing.T) {
 	}
 	if res.NormalizationVersion != 1 || !strings.HasPrefix(res.DirectionHash, "sha256:") || res.Subject == nil || res.Subject.ID != "DA0001" {
 		t.Fatalf("unexpected result: %+v", res)
+	}
+}
+
+func TestAnchorCommand(t *testing.T) {
+	t.Parallel()
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not on PATH")
+	}
+	repo := t.TempDir()
+	git := func(args ...string) {
+		t.Helper()
+		base := []string{"-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"}
+		if out, err := exec.Command("git", append(base, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	git("init", "-q", "-b", "main")
+	wu := filepath.Join(repo, "dashboard-DA0001")
+	if err := os.CopyFS(wu, os.DirFS(fixture("dashboard-DA0001-baseline"))); err != nil {
+		t.Fatal(err)
+	}
+	git("add", "-A")
+	git("commit", "-q", "-m", "fixture")
+
+	out, err := run(context.Background(), "--no-color", "anchor", wu)
+	if err != nil {
+		t.Fatalf("anchor: %v\n%s", err, out)
+	}
+	for _, want := range []string{"direction", "head", "record", ".direction/anchors/sha256-", "commit "} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	out, err = run(context.Background(), "anchor", "--json", wu)
+	if err != nil {
+		t.Fatalf("anchor --json: %v", err)
+	}
+	var rec anchor.Record
+	if err := json.Unmarshal([]byte(out), &rec); err != nil || len(rec.Events) != 2 {
+		t.Fatalf("json record: %v (%d events)\n%s", err, len(rec.Events), out)
+	}
+
+	if err := os.WriteFile(filepath.Join(wu, "FESTIVAL_GOAL.md"), []byte("edited\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err = run(context.Background(), "--no-color", "anchor", wu)
+	if err == nil || !strings.Contains(out, "✗") || !strings.Contains(out, "--force") {
+		t.Fatalf("dirty anchor should fail with a hint: err=%v\n%s", err, out)
+	}
+	if _, err := run(context.Background(), "--no-color", "anchor", t.TempDir()); err == nil {
+		t.Fatal("anchoring outside a repo should fail")
 	}
 }
