@@ -3,7 +3,7 @@ module github.com/Obedience-Corp/fest-direction
 go 1.25.6
 
 require (
-	github.com/Obedience-Corp/obey-shared v0.4.6
+	github.com/Obedience-Corp/obey-shared v0.5.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.41.0
