@@ -13,25 +13,50 @@ ldflags     := "-X " + version_pkg + ".Version=" + version + " -X " + version_pk
 default:
     @just --list --justfile {{source_file()}}
 
-# Build for the current platform into bin/
+# Build direction and the fest-direction plugin name into bin/
 [no-cd]
 local:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
+    cp -f {{bin_dir}}/{{binary_name}} {{bin_dir}}/fest-direction
 
 # Build without optimizations for debugging
 [no-cd]
 debug:
     go build -gcflags 'all=-N -l' -o {{bin_dir}}/{{binary_name}}-debug {{cmd_path}}
 
-# Install to $GOBIN
+# Install direction and the fest-direction plugin name to $GOBIN
 [no-cd]
 install:
+    #!/usr/bin/env bash
+    set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
+    # .Target is the file go install just wrote. A cross-compile lands in
+    # GOPATH/bin/GOOS_GOARCH, and Windows names end in .exe.
+    target="$(go list -f '{{{{.Target}}' {{cmd_path}})"
+    case "$target" in
+        *\\*) dir="${target%\\*}" sep=$'\\' ;;
+        *) dir="${target%/*}" sep=/ ;;
+    esac
+    base="${target##*/}"
+    base="${base##*\\}"
+    suffix="${base#direction}"
+    cp -f "$target" "${dir}${sep}fest-direction${suffix}"
 
-# Remove the binary from $GOBIN
+# Remove both names from $GOBIN
 [no-cd]
 uninstall:
-    rm -f "$(go env GOPATH)/bin/{{binary_name}}"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Same path go install uses, including a cross-compile subdirectory and .exe.
+    target="$(go list -f '{{{{.Target}}' {{cmd_path}})"
+    case "$target" in
+        *\\*) dir="${target%\\*}" sep=$'\\' ;;
+        *) dir="${target%/*}" sep=/ ;;
+    esac
+    base="${target##*/}"
+    base="${base##*\\}"
+    suffix="${base#{{binary_name}}}"
+    rm -f "$target" "${dir}${sep}fest-direction${suffix}"
 
 # Remove build artifacts
 [no-cd]

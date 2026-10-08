@@ -25,9 +25,22 @@ mod checks 'justfiles/lint.just'
 default:
     @just --list --unsorted
 
-# Install the binary to $GOBIN
+# Install direction and the fest-direction plugin name to $GOBIN
 install:
+    #!/usr/bin/env bash
+    set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
+    # .Target is the file go install just wrote. A cross-compile lands in
+    # GOPATH/bin/GOOS_GOARCH, and Windows names end in .exe.
+    target="$(go list -f '{{{{.Target}}' {{cmd_path}})"
+    case "$target" in
+        *\\*) dir="${target%\\*}" sep=$'\\' ;;
+        *) dir="${target%/*}" sep=/ ;;
+    esac
+    base="${target##*/}"
+    base="${base##*\\}"
+    suffix="${base#direction}"
+    cp -f "$target" "${dir}${sep}fest-direction${suffix}"
 
 # Tidy modules and verify the toolchain builds everything
 bootstrap:
@@ -38,9 +51,10 @@ bootstrap:
 dev *ARGS:
     go run -ldflags '{{ldflags}}' {{cmd_path}} {{ARGS}}
 
-# Build the binary into bin/
+# Build direction and the fest-direction plugin name into bin/
 build:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
+    cp -f {{bin_dir}}/{{binary_name}} {{bin_dir}}/fest-direction
 
 # Run the unit tests
 test:

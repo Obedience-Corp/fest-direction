@@ -1,0 +1,20 @@
+# Optional metadata for `fest understand plugins`.
+# PATH discovery of the fest-direction executable is enough for `fest direction`
+# to run. Copy this file to ~/.obey/fest/active/user/plugins/manifest.yml only
+# when that file does not already list other plugins; otherwise merge the entry.
+version: 1
+plugins:
+  - command: direction
+    exec: fest-direction
+    summary: Stable direction hash, git anchor, and in-toto attestation for a Festival work unit
+    description: |
+      Hash a work unit with execution state removed, anchor that hash in git,
+      and carry it in a detached in-toto statement beside the snapshot bundle id.
+    when_to_use:
+      - "Check which plan a commit was made under"
+      - "Anchor a work unit before a task starts"
+      - "Verify a direction attestation"
+    examples:
+      - "fest direction hash festivals/active/my-festival"
+      - "fest direction verify festivals/active/my-festival --statement my-festival.intoto.json"
+    version: "0.1.0"
