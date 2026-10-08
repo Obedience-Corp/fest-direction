@@ -7,9 +7,9 @@ begins, and carried on every commit. Implemented in `internal/anchor`.
 
 | Moment | Mechanism | Enforced? | Hash |
 |---|---|---|---|
-| A task starts (festival and ritual kinds) | `pre_task_start` hook → `direction anchor .` | **Yes** — by `fest.yaml` configuration with `fail: closed`: a failed anchor blocks the task start | direction, of HEAD's tree |
-| Every commit | commit-msg hook → `Festival-Direction` / `Festival-Normalization` trailers | **Yes**, per clone, once `direction hook install` has run (see *Commit trailers*) | direction, of the staged tree |
-| Work begins on a non-festival kind (explore, design, intent, note) | manual `direction anchor <path>`, or the first trailer-bearing commit | No — discipline | direction |
+| A task starts (festival and ritual kinds) | `pre_task_start` hook → `fest-direction anchor .` | **Yes** — by `fest.yaml` configuration with `fail: closed`: a failed anchor blocks the task start | direction, of HEAD's tree |
+| Every commit | commit-msg hook → `Festival-Direction` / `Festival-Normalization` trailers | **Yes**, per clone, once `fest direction hook install` has run (see *Commit trailers*) | direction, of the staged tree |
+| Work begins on a non-festival kind (explore, design, intent, note) | manual `fest direction anchor <path>`, or the first trailer-bearing commit | No — discipline | direction |
 | Completion | archive publish (deferred, not in this festival) | — | snapshot |
 
 Say which row applies when you describe an anchor. A manually invoked anchor is
@@ -59,7 +59,7 @@ need the binding too — put it in the festival's task template or add it on
 creation. `task_start` fires on the first transition into work, including a
 direct completion; `fest task reset` re-arms it.
 
-Prerequisite: `just install` (the binary must be on PATH as `direction`).
+Prerequisite: `just install` (the binary must be on PATH as `fest-direction`).
 With `fail: closed`, a missing binary, an uncommitted plan change, or a
 timeout blocks the task start and `fest next` shows the hook error. That is
 the intended loud failure.
@@ -121,14 +121,14 @@ git's comment tail, and are replaced rather than duplicated on amend.
 ### Install
 
 ```console
-$ direction hook install --repo <repo> --work-unit <path to the work unit>
+$ fest direction hook install --repo <repo> --work-unit <path to the work unit>
 ```
 
 writes `.git/hooks/commit-msg` (honouring `core.hooksPath`) and
 `.direction/config.yaml` with `default_work_unit`. Commit the config; the shim
 is per clone. A foreign `commit-msg` hook is refused; `--force` keeps it as
 `commit-msg.before-direction` and chains it ahead of the shim.
-`direction hook uninstall` reverses both. Inside the hook the work unit comes
+`fest direction hook uninstall` reverses both. The shim execs `fest-direction`, not `fest`, so a commit does not start the fest process. Inside the hook the work unit comes
 from `--work-unit`, then `$DIRECTION_WORK_UNIT`, then the config; with none
 configured the hook is a no-op, so unrelated repositories are never blocked.
 

@@ -1,6 +1,6 @@
 # Direction-record predicate
 
-`direction attest` emits an [in-toto Statement v1](https://in-toto.io/Statement/v1)
+`fest direction attest` emits an [in-toto Statement v1](https://in-toto.io/Statement/v1)
 whose predicate is a **direction record**. The statement is a detached JSON
 file beside the work unit or bundle; the bundle itself is never modified, so a
 `fest unbundle → fest pack` round trip leaves both the bundle and its hashes
@@ -49,7 +49,7 @@ predicate repeats `snapshot_id` in full so the semantics are explicit.
 
 ## Verification
 
-`direction verify <path> --statement <file>` runs, in order:
+`fest direction verify <path> --statement <file>` runs, in order:
 
 1. `statement` — well-formed Statement v1
 2. `predicate-type` — the direction-record type above

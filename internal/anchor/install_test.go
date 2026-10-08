@@ -22,7 +22,7 @@ func TestInstallAndUninstall(t *testing.T) {
 		t.Fatal(err)
 	}
 	shim, err := os.ReadFile(res.HookPath)
-	if err != nil || !strings.Contains(string(shim), shimMarker) || !strings.Contains(string(shim), "direction hook commit-msg") {
+	if err != nil || !strings.Contains(string(shim), shimMarker) || !strings.Contains(string(shim), "fest-direction hook commit-msg") {
 		t.Fatalf("shim: %v\n%s", err, shim)
 	}
 	if st, _ := os.Stat(res.HookPath); st.Mode()&0o111 == 0 {

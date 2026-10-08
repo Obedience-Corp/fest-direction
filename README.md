@@ -23,12 +23,9 @@ All verbs of the build festival (`direction-archive-DA0004`) are implemented:
 
 ## Fest plugin
 
-`fest direction` is this program. `just install` puts two names on `PATH`:
+This program is the `fest-direction` binary. Fest discovers that name on `PATH` and runs it as `fest direction`. There is no separate `direction` executable. `just install` installs `fest-direction` only.
 
-| Name | Who calls it |
-|------|----------------|
-| `fest-direction` | Fest. Any `fest-*` executable is a plugin, so `fest direction hash <work-unit>` runs this binary. |
-| `direction` | The git `commit-msg` shim and a festival's `pre_task_start` hook (`direction anchor .`). Those call the binary directly. They do not go through fest's plugin dispatcher. |
+The git `commit-msg` shim and a festival `pre_task_start` hook call `fest-direction` directly (`fest-direction anchor .`, `fest-direction hook commit-msg`). A commit does not start `fest` to append trailers.
 
 `plugins/manifest.yml` is optional metadata for `fest understand plugins`. Discovery works without it.
 
@@ -38,14 +35,14 @@ The whole flow on a copy of the `dashboard-DA0001` fixture in a fresh
 repository (`--no-color` output; a real session is styled):
 
 ```console
-$ direction hash festivals/dashboard-DA0001
+$ fest direction hash festivals/dashboard-DA0001
 direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
 normalization v2
 snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
 kind         festival
 subject      DA0001
 
-$ direction anchor festivals/dashboard-DA0001
+$ fest direction anchor festivals/dashboard-DA0001
 direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
 normalization v2
 snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
@@ -54,7 +51,7 @@ record       .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc
 events       1
 ⚠ commit .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a.json with your next commit — the record is the evidence
 
-$ direction hook install --work-unit festivals/dashboard-DA0001
+$ fest direction hook install --work-unit festivals/dashboard-DA0001
 ✓ installed .git/hooks/commit-msg
 
 $ git add -A && git commit -m "[FE-DA0001] work under the plan"
@@ -62,7 +59,7 @@ $ git log -1 --format=%B | git interpret-trailers --parse
 Festival-Direction: sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
 Festival-Normalization: 2
 
-$ direction attest festivals/dashboard-DA0001 --anchors-from .
+$ fest direction attest festivals/dashboard-DA0001 --anchors-from .
 subject      DA0001.festival
 digest       sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
 direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
@@ -70,7 +67,7 @@ normalization v2
 anchors      3
 written      festivals/dashboard-DA0001.intoto.json
 
-$ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
+$ fest direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
 ✓ statement  https://in-toto.io/Statement/v1
 ✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
 ✓ normalization-version  2
@@ -79,7 +76,7 @@ $ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA
 ✓ verified
 
 $ sed -i "" "s/fest_status: pending/fest_status: completed/" festivals/dashboard-DA0001/001_IMPLEMENT/01_data_layer/01_link_project.md   # a task completes
-$ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
+$ fest direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
 ✓ statement  https://in-toto.io/Statement/v1
 ✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
 ✓ normalization-version  2
@@ -91,7 +88,7 @@ $ direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA
 
 `snapshot` moves as tasks complete; `direction` does not — that is the whole
 point, and `verify` names the difference. Inside a festival the anchor is not a
-manual step: `fest` fires `direction anchor` at `pre_task_start` (see
+manual step: `fest` fires `fest-direction anchor` at `pre_task_start` (see
 `docs/anchoring.md`). The rule set is versioned in `docs/normalization.md`; an
 unrecognized `fest_*` field fails the command rather than silently changing
 the hash. What all of this proves — and does not — is in `docs/claims.md`.
@@ -99,8 +96,8 @@ the hash. What all of this proves — and does not — is in `docs/claims.md`.
 ## Build
 
 ```bash
-just build      # bin/direction and bin/fest-direction
-just install    # both names on PATH; `fest direction` then works
+just build      # bin/fest-direction
+just install    # fest-direction on PATH; `fest direction` then works
 just test
 just lint
 ```

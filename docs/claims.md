@@ -1,6 +1,6 @@
 # Claims
 
-What `direction verify` proves, and what it does not. Taken from the design's
+What `fest direction verify` proves, and what it does not. Taken from the design's
 threat model; where the shipped code proves less than the design hoped, that is
 stated rather than smoothed over.
 

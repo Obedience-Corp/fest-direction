@@ -73,7 +73,7 @@ func TestAttestCollectsAnchors(t *testing.T) {
 	if err := os.MkdirAll(bin, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if out, err := execCommand("go", "build", "-o", filepath.Join(bin, "direction"), "../../cmd/direction"); err != nil {
+	if out, err := execCommand("go", "build", "-o", filepath.Join(bin, "fest-direction"), "../../cmd/fest-direction"); err != nil {
 		t.Fatalf("build: %v\n%s", err, out)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))

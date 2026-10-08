@@ -22,7 +22,7 @@ const (
 ` + shimMarker + ` — appends Festival-Direction trailers; see docs/anchoring.md
 here="$(dirname "$0")"
 if [ -x "$here/` + chainedName + `" ]; then "$here/` + chainedName + `" "$@" || exit $?; fi
-exec direction hook commit-msg "$1"
+exec fest-direction hook commit-msg "$1"
 `
 )
 
