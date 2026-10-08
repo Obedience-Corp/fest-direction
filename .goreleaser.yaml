@@ -1,0 +1,52 @@
+version: 2
+
+builds:
+  - id: fest-direction
+    main: ./cmd/fest-direction
+    binary: fest-direction
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/Obedience-Corp/fest-direction/internal/version.Version={{.Version}}
+      - -X github.com/Obedience-Corp/fest-direction/internal/version.Commit={{.Commit}}
+      - -X github.com/Obedience-Corp/fest-direction/internal/version.BuildDate={{.Date}}
+
+archives:
+  - id: fest-direction
+    formats: [tar.gz]
+    # The installer looks for the binary at the archive root, named fest-direction.
+    wrap_in_directory: false
+    name_template: >-
+      fest-direction-
+      {{- .Version }}-
+      {{- if eq .Os "darwin" }}macOS
+      {{- else }}{{ .Os }}{{ end }}-
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  github:
+    owner: Obedience-Corp
+    name: fest-direction
+  prerelease: auto
