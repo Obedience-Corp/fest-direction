@@ -2,7 +2,10 @@ package anchor
 
 import (
 	"context"
+	"errors"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/Obedience-Corp/fest-direction/internal/direction"
 	"github.com/Obedience-Corp/fest-direction/internal/errs"
@@ -17,7 +20,7 @@ func InjectTrailers(ctx context.Context, repo Repo, rel, msgPath string, p norma
 	if err := ctx.Err(); err != nil {
 		return false, err
 	}
-	tree, cleanup, err := repo.indexTree(ctx, rel)
+	tree, used, cleanup, err := repo.indexTree(ctx, rel)
 	if err != nil {
 		return false, err
 	}
@@ -30,10 +33,67 @@ func InjectTrailers(ctx context.Context, repo Repo, rel, msgPath string, p norma
 	if err != nil {
 		return false, errs.Wrap("commit-msg "+rel, err)
 	}
-	if !changed {
-		return false, nil
+	if changed {
+		if err := os.WriteFile(msgPath, []byte(out), 0o644); err != nil {
+			return false, errs.Wrap("commit-msg: write "+msgPath, err)
+		}
 	}
-	return true, errs.Wrap("commit-msg: write "+msgPath, os.WriteFile(msgPath, []byte(out), 0o644))
+	// Disk-only fallback for clones whose pre-commit shim is not installed yet.
+	// git writes the commit tree before commit-msg, so staging here cannot
+	// enter this commit. pre-commit stages the retarget in time.
+	if err := repo.retargetConfiguredUnit(ctx, rel, used, false); err != nil {
+		return false, err
+	}
+	return changed, nil
+}
+
+// RetargetStagedRename points default_work_unit at a work unit that was renamed
+// as a whole in the index, and stages the config. A missing path that is not
+// such a rename is left for the commit-msg hook to reject.
+func (r Repo) RetargetStagedRename(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	cfg, err := ReadConfig(r)
+	if err != nil || cfg.DefaultWorkUnit == "" {
+		return err
+	}
+	out, err := runGit(ctx, r.Root, "write-tree")
+	if err != nil {
+		return err
+	}
+	used, err := r.resolveTreePath(ctx, cfg.DefaultWorkUnit, strings.TrimSpace(out))
+	if errors.Is(err, ErrWorkUnitMissing) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return r.retargetConfiguredUnit(ctx, cfg.DefaultWorkUnit, used, true)
+}
+
+// retargetConfiguredUnit points default_work_unit from → to. stage adds the
+// file to the index. A config that names some other path is left alone.
+func (r Repo) retargetConfiguredUnit(ctx context.Context, from, to string, stage bool) error {
+	if from == to {
+		return nil
+	}
+	cfg, err := ReadConfig(r)
+	if err != nil {
+		return err
+	}
+	if cfg.DefaultWorkUnit != from {
+		return nil
+	}
+	path := filepath.Join(r.Root, filepath.FromSlash(configPath))
+	if err := writeConfig(path, Config{DefaultWorkUnit: to}); err != nil {
+		return err
+	}
+	if !stage {
+		return nil
+	}
+	_, err = runGit(ctx, r.Root, "add", "--", configPath)
+	return err
 }
 
 // TrailersForTree hashes rel inside the git tree treeish and returns message
@@ -44,7 +104,11 @@ func TrailersForTree(ctx context.Context, repo Repo, rel, treeish, message strin
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	dir, cleanup, err := repo.treeAt(ctx, rel, treeish)
+	used, err := repo.resolveTreePath(ctx, rel, treeish)
+	if err != nil {
+		return "", err
+	}
+	dir, cleanup, err := repo.treeAt(ctx, used, treeish)
 	if err != nil {
 		return "", err
 	}

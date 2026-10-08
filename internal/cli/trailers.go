@@ -29,7 +29,11 @@ A hash or git failure exits non-zero, writes the error to stderr, and writes
 nothing to stdout. Pipe the original message to this command and pass its
 successful stdout, unchanged, to git commit-tree. That stdout is the whole
 message, not a trailer block to append, and it is unchanged when no work
-unit is configured. commit-tree does not run the commit-msg hook.`,
+unit is configured. commit-tree does not run the commit-msg hook.
+
+If the configured path is missing from --tree because the work unit was
+renamed as a whole since HEAD, the command hashes the new directory. It does
+not rewrite .direction/config.yaml; the commit-msg hook does that.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return a.runTrailers(cmd, tree, workUnit)

@@ -27,12 +27,19 @@ func (r Repo) headTree(ctx context.Context, rel string) (string, func(), error) 
 
 // indexTree materializes the staged version of rel — what a commit in
 // progress will contain — by writing the index as a tree object first.
-func (r Repo) indexTree(ctx context.Context, rel string) (string, func(), error) {
+// used is rel, or the directory rel was renamed to as a whole since HEAD.
+func (r Repo) indexTree(ctx context.Context, rel string) (dir, used string, cleanup func(), err error) {
 	out, err := runGit(ctx, r.Root, "write-tree")
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
-	return r.treeAt(ctx, rel, strings.TrimSpace(out))
+	treeish := strings.TrimSpace(out)
+	used, err = r.resolveTreePath(ctx, rel, treeish)
+	if err != nil {
+		return "", "", nil, err
+	}
+	dir, cleanup, err = r.treeAt(ctx, used, treeish)
+	return dir, used, cleanup, err
 }
 
 // treeAt extracts treeish:rel into a private temp directory and returns the

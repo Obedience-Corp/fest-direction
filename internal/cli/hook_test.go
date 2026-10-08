@@ -82,6 +82,23 @@ func TestHookEndToEnd(t *testing.T) {
 	if _, err := anchor.ParseTrailers(git("log", "-1", "--format=%B")); err != nil {
 		t.Fatalf("unrelated commit lacks trailers: %v", err)
 	}
+	// A whole-directory move of the configured work unit must still commit,
+	// and the committed config must name the new path.
+	if err := os.MkdirAll(filepath.Join(repo, "festivals", ".dungeon"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	git("mv", "festivals/dashboard-DA0001", "festivals/.dungeon/dashboard-DA0001")
+	git("commit", "-q", "-m", "dungeon festival")
+	if _, err := anchor.ParseTrailers(git("log", "-1", "--format=%B")); err != nil {
+		t.Fatalf("move commit lacks trailers: %v", err)
+	}
+	cfg := git("show", "HEAD:.direction/config.yaml")
+	if !strings.Contains(cfg, "default_work_unit: festivals/.dungeon/dashboard-DA0001\n") {
+		t.Fatalf("committed config did not follow the move:\n%s", cfg)
+	}
+	if status := git("status", "--short"); status != "" {
+		t.Fatalf("move commit left the tree dirty:\n%s", status)
+	}
 	// Uninstall: later commits carry none.
 	if _, err := run(context.Background(), "--no-color", "hook", "uninstall", "--repo", repo); err != nil {
 		t.Fatal(err)

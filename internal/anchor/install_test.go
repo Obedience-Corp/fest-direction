@@ -25,6 +25,11 @@ func TestInstallAndUninstall(t *testing.T) {
 	if err != nil || !strings.Contains(string(shim), shimMarker) || !strings.Contains(string(shim), "fest-direction hook commit-msg") {
 		t.Fatalf("shim: %v\n%s", err, shim)
 	}
+	pre := filepath.Join(filepath.Dir(res.HookPath), "pre-commit")
+	preShim, err := os.ReadFile(pre)
+	if err != nil || !strings.Contains(string(preShim), "fest-direction hook pre-commit") {
+		t.Fatalf("pre-commit shim: %v\n%s", err, preShim)
+	}
 	if st, _ := os.Stat(res.HookPath); st.Mode()&0o111 == 0 {
 		t.Fatal("shim not executable")
 	}
@@ -41,6 +46,9 @@ func TestInstallAndUninstall(t *testing.T) {
 	}
 	if _, err := os.Stat(res.HookPath); !errors.Is(err, os.ErrNotExist) {
 		t.Fatal("shim still present after uninstall")
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(res.HookPath), "pre-commit")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("pre-commit shim still present after uninstall")
 	}
 }
 
@@ -63,7 +71,7 @@ func TestInstallForeignHook(t *testing.T) {
 	if err != nil || !res.Chained {
 		t.Fatalf("force install: %+v, %v", res, err)
 	}
-	if b, err := os.ReadFile(filepath.Join(hooksDir, chainedName)); err != nil || !strings.Contains(string(b), "foreign") {
+	if b, err := os.ReadFile(filepath.Join(hooksDir, "commit-msg.before-direction")); err != nil || !strings.Contains(string(b), "foreign") {
 		t.Fatalf("foreign hook not preserved: %v", err)
 	}
 	if err := Uninstall(ctx, repo); err != nil {
