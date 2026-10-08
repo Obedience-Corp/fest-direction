@@ -30,16 +30,19 @@ install:
     #!/usr/bin/env bash
     set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
-    # go install writes to GOBIN, otherwise the first GOPATH entry. GOPATH is a list.
+    # go install writes to GOBIN, otherwise the first GOPATH entry.
+    # The list separator is ';' on Windows and ':' elsewhere. Choosing it from
+    # the string would split a drive letter: C:\Users\alice\go has no semicolon.
     dest="$(go env GOBIN)"
     if [[ -z "$dest" ]]; then
         gopath="$(go env GOPATH)"
-        case "$gopath" in
-            *";"*) dest="${gopath%%;*}/bin" ;;
+        case "$(go env GOHOSTOS)" in
+            windows) dest="${gopath%%;*}/bin" ;;
             *) dest="${gopath%%:*}/bin" ;;
         esac
     fi
-    cp -f "$dest/direction" "$dest/fest-direction"
+    exe="$(go env GOEXE)"
+    cp -f "$dest/direction$exe" "$dest/fest-direction$exe"
 
 # Remove both names from $GOBIN
 [no-cd]
@@ -50,12 +53,13 @@ uninstall:
     dest="$(go env GOBIN)"
     if [[ -z "$dest" ]]; then
         gopath="$(go env GOPATH)"
-        case "$gopath" in
-            *";"*) dest="${gopath%%;*}/bin" ;;
+        case "$(go env GOHOSTOS)" in
+            windows) dest="${gopath%%;*}/bin" ;;
             *) dest="${gopath%%:*}/bin" ;;
         esac
     fi
-    rm -f "$dest/{{binary_name}}" "$dest/fest-direction"
+    exe="$(go env GOEXE)"
+    rm -f "$dest/{{binary_name}}$exe" "$dest/fest-direction$exe"
 
 # Remove build artifacts
 [no-cd]
