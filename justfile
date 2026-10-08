@@ -30,8 +30,15 @@ install:
     #!/usr/bin/env bash
     set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
+    # go install writes to GOBIN, otherwise the first GOPATH entry. GOPATH is a list.
     dest="$(go env GOBIN)"
-    if [[ -z "$dest" ]]; then dest="$(go env GOPATH)/bin"; fi
+    if [[ -z "$dest" ]]; then
+        gopath="$(go env GOPATH)"
+        case "$gopath" in
+            *";"*) dest="${gopath%%;*}/bin" ;;
+            *) dest="${gopath%%:*}/bin" ;;
+        esac
+    fi
     cp -f "$dest/direction" "$dest/fest-direction"
 
 # Tidy modules and verify the toolchain builds everything
