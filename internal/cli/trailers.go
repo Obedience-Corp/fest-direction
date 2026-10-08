@@ -26,8 +26,10 @@ way as hook commit-msg: --work-unit, then $DIRECTION_WORK_UNIT, then
 copied through unchanged and the command exits 0.
 
 A hash or git failure exits non-zero, writes the error to stderr, and writes
-nothing to stdout. Append this command's stdout to the message before
-git commit-tree; that path does not run the commit-msg hook.`,
+nothing to stdout. Pipe the original message to this command and pass its
+successful stdout, unchanged, to git commit-tree. That stdout is the whole
+message, not a trailer block to append, and it is unchanged when no work
+unit is configured. commit-tree does not run the commit-msg hook.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return a.runTrailers(cmd, tree, workUnit)

@@ -141,11 +141,12 @@ it — and leaves a commit without trailers, which is itself visible.
 `fest-direction trailers --tree <git-tree-sha>` hashes that git tree, not the
 index and not the working tree. Camp background jobs commit with
 `git commit-tree`, which never runs the `commit-msg` hook, but they already
-hold the tree they are about to commit. The job must append the command's
-stdout to the message before `git commit-tree`. The work unit resolves the
-same way as the hook; with none configured, stdin is copied to stdout and the
-command exits 0. A hash or git failure exits non-zero and writes nothing to
-stdout.
+hold the tree they are about to commit. The job pipes its message to the
+command and passes the successful stdout, unchanged, to `git commit-tree`.
+That stdout is the whole message. Appending it to the original text
+duplicates the subject and body, including when no work unit is configured
+and stdin is copied through. The work unit resolves the same way as the
+hook. A hash or git failure exits non-zero and writes nothing to stdout.
 
 ### Campaign wiring decision
 
