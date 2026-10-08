@@ -136,6 +136,17 @@ The hook fails closed: a missing binary, an unknown `fest_*` field, or a git
 failure aborts the commit with a message. `git commit --no-verify` bypasses
 it — and leaves a commit without trailers, which is itself visible.
 
+### `trailers` for `git commit-tree`
+
+`fest-direction trailers --tree <git-tree-sha>` hashes that git tree, not the
+index and not the working tree. Camp background jobs commit with
+`git commit-tree`, which never runs the `commit-msg` hook, but they already
+hold the tree they are about to commit. The job must append the command's
+stdout to the message before `git commit-tree`. The work unit resolves the
+same way as the hook; with none configured, stdin is copied to stdout and the
+command exits 0. A hash or git failure exits non-zero and writes nothing to
+stdout.
+
 ### Campaign wiring decision
 
 `campaign.yaml` declares `hooks.commit_message: ob commit` — the message

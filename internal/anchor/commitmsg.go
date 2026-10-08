@@ -22,17 +22,48 @@ func InjectTrailers(ctx context.Context, repo Repo, rel, msgPath string, p norma
 		return false, err
 	}
 	defer cleanup()
-	res, err := direction.Hash(ctx, tree, p)
-	if err != nil {
-		return false, errs.Wrap("commit-msg "+rel, err)
-	}
 	msg, err := os.ReadFile(msgPath)
 	if err != nil {
 		return false, errs.Wrap("commit-msg: read "+msgPath, err)
 	}
-	out, changed := AppendTrailers(string(msg), res)
+	out, changed, err := hashAndAppend(ctx, tree, string(msg), p)
+	if err != nil {
+		return false, errs.Wrap("commit-msg "+rel, err)
+	}
 	if !changed {
 		return false, nil
 	}
 	return true, errs.Wrap("commit-msg: write "+msgPath, os.WriteFile(msgPath, []byte(out), 0o644))
+}
+
+// TrailersForTree hashes rel inside the git tree treeish and returns message
+// with direction trailers applied. treeish is a tree the caller already holds
+// (the tree a background job will pass to git commit-tree). It is not the
+// index and not the working tree. On failure the returned message is empty.
+func TrailersForTree(ctx context.Context, repo Repo, rel, treeish, message string, p normalize.Policy) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	dir, cleanup, err := repo.treeAt(ctx, rel, treeish)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	out, _, err := hashAndAppend(ctx, dir, message, p)
+	if err != nil {
+		return "", errs.Wrap("trailers "+rel, err)
+	}
+	return out, nil
+}
+
+// hashAndAppend hashes the materialized work unit at dir and applies direction
+// trailers to message. The commit-msg hook and TrailersForTree both use it;
+// only the tree they materialize differs.
+func hashAndAppend(ctx context.Context, dir, message string, p normalize.Policy) (string, bool, error) {
+	res, err := direction.Hash(ctx, dir, p)
+	if err != nil {
+		return "", false, err
+	}
+	out, changed := AppendTrailers(message, res)
+	return out, changed, nil
 }
