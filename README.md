@@ -1,38 +1,33 @@
 # fest-direction
 
-`direction` gives Festival work units a **stable direction hash** — a content
-address for what an agent system was instructed to do, separable from execution
-state, anchorable in git before work begins, and carried in a detached in-toto
-attestation beside the bundle's existing snapshot hash.
+`fest direction` names the plan a Festival work unit was given, and keeps that name still while the work moves.
 
-It answers one question anyone holding the repo can check without trusting the
-operator's infrastructure: *which plan produced this commit, and has that plan
-been revised since?*
+![A sealed plan on a desk, task cards shifting beside it.](docs/images/banner.jpg)
 
-## Status
+A Festival already has a snapshot hash, `bundle.id`. It changes when a task is checked off or a status field flips. The direction hash is the same content address after that execution state is removed. Completing a task moves the snapshot and leaves the direction hash alone. Editing the instructions moves the direction hash.
 
-All verbs of the build festival (`direction-archive-DA0004`) are implemented:
+Anyone with the repository can ask: which plan was in force for this commit, and has that plan been revised since?
 
-| Verb | Phase | Does |
-|------|-------|------|
-| `hash` | **available** | Normalize a work unit (strip `fest_status`, `fest_updated`, `.fest/`, checkbox state, `status_history`) and hash it with the SPEC §7.1 algorithm; also reports the snapshot `bundle.id` |
-| `anchor` | **available** | Hash HEAD's version of the work unit and append an event to `.direction/anchors/`; refuses an uncommitted plan change; binds to fest's `pre_task_start` (see `docs/anchoring.md`) |
-| `hook` | **available** | `commit-msg` trailer injection from the staged tree; `install` / `uninstall` the per-clone shim (see `docs/anchoring.md`) |
-| `attest` | **available** | Emit an in-toto Statement v1 with the direction-record predicate, anchors included (`docs/predicate.md`) |
-| `verify` | **available** | Recompute both hashes and check them against a statement; distinguishes a state-only change from a changed plan |
+## Install
 
-## Fest plugin
+The program is the `fest-direction` binary. Fest finds that name on `PATH` and runs it as `fest direction`.
 
-This program is the `fest-direction` binary. Fest discovers that name on `PATH` and runs it as `fest direction`. There is no separate `direction` executable. `just install` installs `fest-direction` only.
+```bash
+just install
+```
 
-The git `commit-msg` shim and a festival `pre_task_start` hook call `fest-direction` directly (`fest-direction anchor .`, `fest-direction hook commit-msg`). A commit does not start `fest` to append trailers.
+There is no separate `direction` executable. `pre_task_start` and the git `commit-msg` shim call `fest-direction` directly, so a commit does not start `fest`.
 
-`plugins/manifest.yml` is optional metadata for `fest understand plugins`. Discovery works without it.
+## The two hashes
 
-## Usage
+`fest direction hash <work-unit>` prints both.
 
-The whole flow on a copy of the `dashboard-DA0001` fixture in a fresh
-repository (`--no-color` output; a real session is styled):
+| Hash | Moves when |
+|------|------------|
+| `direction` | The written plan changes: goals, tasks, dependencies, hooks |
+| `snapshot` | Execution state changes: `fest_status`, checkboxes, `.fest/`, `status_history` |
+
+Normalization is version 2. An unknown `fest_*` field fails the command rather than slipping into the hash. The rules are in [`docs/normalization.md`](docs/normalization.md).
 
 ```console
 $ fest direction hash festivals/dashboard-DA0001
@@ -41,84 +36,37 @@ normalization v2
 snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
 kind         festival
 subject      DA0001
-
-$ fest direction anchor festivals/dashboard-DA0001
-direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
-normalization v2
-snapshot     sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
-head         57f44d97bfb72929bf143811873031f78f72c321
-record       .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a.json
-events       1
-⚠ commit .direction/anchors/sha256-7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a.json with your next commit — the record is the evidence
-
-$ fest direction hook install --work-unit festivals/dashboard-DA0001
-✓ installed .git/hooks/commit-msg
-
-$ git add -A && git commit -m "[FE-DA0001] work under the plan"
-$ git log -1 --format=%B | git interpret-trailers --parse
-Festival-Direction: sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
-Festival-Normalization: 2
-
-$ fest direction attest festivals/dashboard-DA0001 --anchors-from .
-subject      DA0001.festival
-digest       sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
-direction    sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
-normalization v2
-anchors      3
-written      festivals/dashboard-DA0001.intoto.json
-
-$ fest direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
-✓ statement  https://in-toto.io/Statement/v1
-✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
-✓ normalization-version  2
-✓ snapshot  sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e
-✓ direction  sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
-✓ verified
-
-$ sed -i "" "s/fest_status: pending/fest_status: completed/" festivals/dashboard-DA0001/001_IMPLEMENT/01_data_layer/01_link_project.md   # a task completes
-$ fest direction verify festivals/dashboard-DA0001 --statement festivals/dashboard-DA0001.intoto.json
-✓ statement  https://in-toto.io/Statement/v1
-✓ predicate-type  https://github.com/Obedience-Corp/fest-direction/predicate/direction-record/v1
-✓ normalization-version  2
-✗ snapshot  want sha256:4faf484b9bfb324cff4657bf0a79df2e6db2e14689b69cfbe4555a1981ba822e got sha256:6e7037e1edfb9091b86a27d0af06ae507a84c84330556f0381a198aefc88006f
-✓ direction  sha256:7db1704665ae7e3125c3b045a4e59941b1be050fc1d9d1669d43e090247c3e6a
-⚠ execution state changed; direction intact
-✗ verification failed: snapshot
 ```
 
-`snapshot` moves as tasks complete; `direction` does not — that is the whole
-point, and `verify` names the difference. Inside a festival the anchor is not a
-manual step: `fest` fires `fest-direction anchor` at `pre_task_start` (see
-`docs/anchoring.md`). The rule set is versioned in `docs/normalization.md`; an
-unrecognized `fest_*` field fails the command rather than silently changing
-the hash. What all of this proves — and does not — is in `docs/claims.md`.
+## Where the hash is recorded
+
+Three places, all local:
+
+1. **Before the task starts.** `fest` runs `fest-direction anchor .` at `pre_task_start`. The hash of `HEAD` is appended to `.direction/anchors/`. An uncommitted plan change is refused. Commit the record; it is the evidence, and it is not part of the hash.
+2. **On each commit.** `fest direction hook install` writes a `commit-msg` shim. The shim hashes the staged tree and adds `Festival-Direction` and `Festival-Normalization`.
+3. **In a statement.** `fest direction attest` writes an in-toto Statement v1 beside the work unit. `fest direction verify` recomputes both hashes. A completed task fails the snapshot check and passes the direction check.
+
+Camp background jobs commit with `git commit-tree`, which never runs the hook. They already hold the tree. Pipe the message through `fest direction trailers --tree <sha>` and pass the stdout, unchanged, to `commit-tree`. That stdout is the whole message.
+
+The hook and anchor details are in [`docs/anchoring.md`](docs/anchoring.md). The statement is in [`docs/predicate.md`](docs/predicate.md).
+
+## What a match means
+
+A matching direction hash means the written plan is the one that was anchored and carried on the commit. It does not mean the plan was carried out, that the archive is complete, or that instructions given outside the tree did not exist. What is and is not claimed is in [`docs/claims.md`](docs/claims.md).
 
 ## Build
 
+Go 1.25.6 or newer, and [`just`](https://github.com/casey/just).
+
 ```bash
-just build      # bin/fest-direction
-just install    # fest-direction on PATH; `fest direction` then works
+just build    # bin/fest-direction
 just test
 just lint
 ```
 
-Requires Go 1.25.6+ and [`just`](https://github.com/casey/just).
-
-## What it proves — and doesn't
-
-Quietly revising the record of what an agent was told to do becomes
-**detectable**. It does not prove the archive is complete, that an anchored plan
-was executed, or that unwritten instructions did not exist. Records are
-tamper-evident, not tamper-proof. <!-- avoided -->
-
 ## Design
 
-The design of record lives in the Obey-Agent-Economy campaign under
-`workflow/design/festival-direction-archive`: normalization spec, anchoring
-design, threat model, prior art (in-toto registry audit), glossary. The bundle
-format is the Festival Bundle SPEC, implemented in
-`github.com/Obedience-Corp/obey-shared/festivalbundle`; this project layers
-over it and changes nothing upstream.
+The design notes live in the Obey-Agent-Economy campaign at `workflow/design/festival-direction-archive`. The bundle format is Festival Bundle, implemented in `github.com/Obedience-Corp/obey-shared/festivalbundle`. This repository layers the direction hash on that format and does not change it.
 
 ## License
 
