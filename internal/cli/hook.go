@@ -19,7 +19,35 @@ func newHookCommand(a *app) *cobra.Command {
 		Use:   "hook",
 		Short: "Git hook entry points: commit-msg trailers, install, uninstall",
 	}
-	cmd.AddCommand(newHookCommitMsgCommand(a), newHookInstallCommand(a), newHookUninstallCommand(a))
+	cmd.AddCommand(newHookPreCommitCommand(a), newHookCommitMsgCommand(a), newHookInstallCommand(a), newHookUninstallCommand(a))
+	return cmd
+}
+
+func newHookPreCommitCommand(a *app) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pre-commit",
+		Short: "Stage a new default_work_unit when the work unit directory was renamed",
+		Long: `Reads default_work_unit from .direction/config.yaml. When that path is gone
+from the index because the work unit was renamed as a whole since HEAD, rewrites
+the config and stages it so this commit records the new path. Git writes the
+commit tree after pre-commit and before commit-msg, so the retarget has to
+happen here to be part of the commit.
+
+A deletion or a split across directories is left for commit-msg, which fails
+the commit. With no work unit configured, the hook does nothing.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			repo, err := anchor.OpenRepo(ctx, ".")
+			if err != nil {
+				return a.fail(cmd, err)
+			}
+			if err := repo.RetargetStagedRename(ctx); err != nil {
+				return a.fail(cmd, err)
+			}
+			return nil
+		},
+	}
 	return cmd
 }
 
@@ -32,6 +60,13 @@ func newHookCommitMsgCommand(a *app) *cobra.Command {
 .direction/config.yaml (default_work_unit). With none configured the hook is a
 no-op so unrelated repositories are never blocked. Otherwise it hashes the
 staged version of the work unit and writes the trailers into the message.
+
+When the configured path is gone because the work unit was renamed as a whole
+since HEAD — every file under it moved into one new directory — the hook hashes
+that directory. The pre-commit shim stages the updated default_work_unit so
+the commit contains it. A deletion or a split across directories still aborts
+the commit.
+
 Errors abort the commit (fail closed); git commit --no-verify bypasses it.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -96,12 +131,12 @@ func newHookInstallCommand(a *app) *cobra.Command {
 				p := a.errPrinter(cmd)
 				p.Fail(err.Error())
 				if errors.Is(err, anchor.ErrForeignHook) {
-					p.Warn("pass --force to keep the existing hook as commit-msg.before-direction and chain it")
+					p.Warn("pass --force to keep the existing hook as <name>.before-direction and chain it")
 				}
 				return errs.ErrAlreadyPrinted
 			}
 			p := a.printer(cmd)
-			p.Success("installed " + res.HookPath)
+			p.Success("installed commit-msg and pre-commit")
 			if res.ConfigPath != "" {
 				p.Field("work unit", workUnit)
 				p.Field("config", res.ConfigPath)

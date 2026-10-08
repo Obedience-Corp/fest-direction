@@ -118,17 +118,34 @@ point: the plan in force is recorded on the work done under it. Trailers join
 an existing trailer block (`Signed-off-by` and friends are kept), sit before
 git's comment tail, and are replaced rather than duplicated on amend.
 
+If the configured path is absent from that tree because the work unit was
+renamed as a whole since HEAD — every file under it renamed into one new
+directory, which is what `fest promote` and a dungeon move look like — the
+hook hashes the new directory. A deletion, or files split across more than
+one directory, still fails the commit. `trailers --tree` follows the same
+rename when hashing and does not rewrite the config.
+
+Git builds the commit tree after `pre-commit` and before `commit-msg`, so
+`commit-msg` cannot put a file into the commit it is finishing. The
+`pre-commit` shim rewrites `default_work_unit` and stages it when it sees
+that rename, and the same commit records the new path. `hook install` writes
+both shims. A clone that only has the older `commit-msg` shim still commits
+(the hash follows the rename) and rewrites the config on disk, leaving that
+file for the next commit to pick up. Reinstall the hooks to stage it in the
+move commit itself.
+
 ### Install
 
 ```console
 $ fest direction hook install --repo <repo> --work-unit <path to the work unit>
 ```
 
-writes `.git/hooks/commit-msg` (honouring `core.hooksPath`) and
-`.direction/config.yaml` with `default_work_unit`. Commit the config; the shim
-is per clone. A foreign `commit-msg` hook is refused; `--force` keeps it as
-`commit-msg.before-direction` and chains it ahead of the shim.
-`fest direction hook uninstall` reverses both. The shim execs `fest-direction`, not `fest`, so a commit does not start the fest process. Inside the hook the work unit comes
+writes `.git/hooks/commit-msg` and `.git/hooks/pre-commit` (honouring
+`core.hooksPath`) and `.direction/config.yaml` with `default_work_unit`.
+Commit the config; the shims are per clone. A foreign hook of either name is
+refused; `--force` keeps it as `<name>.before-direction` and chains it ahead
+of the shim. `fest direction hook uninstall` reverses both. The shims exec
+`fest-direction`, not `fest`, so a commit does not start the fest process. Inside the hook the work unit comes
 from `--work-unit`, then `$DIRECTION_WORK_UNIT`, then the config; with none
 configured the hook is a no-op, so unrelated repositories are never blocked.
 
