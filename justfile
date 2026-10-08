@@ -30,19 +30,17 @@ install:
     #!/usr/bin/env bash
     set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
-    # go install writes to GOBIN, otherwise the first GOPATH entry.
-    # The list separator is ';' on Windows and ':' elsewhere. Choosing it from
-    # the string would split a drive letter: C:\Users\alice\go has no semicolon.
-    dest="$(go env GOBIN)"
-    if [[ -z "$dest" ]]; then
-        gopath="$(go env GOPATH)"
-        case "$(go env GOHOSTOS)" in
-            windows) dest="${gopath%%;*}/bin" ;;
-            *) dest="${gopath%%:*}/bin" ;;
-        esac
-    fi
-    exe="$(go env GOEXE)"
-    cp -f "$dest/direction$exe" "$dest/fest-direction$exe"
+    # .Target is the file go install just wrote. A cross-compile lands in
+    # GOPATH/bin/GOOS_GOARCH, and Windows names end in .exe.
+    target="$(go list -f '{{{{.Target}}' {{cmd_path}})"
+    case "$target" in
+        *\\*) dir="${target%\\*}" sep=$'\\' ;;
+        *) dir="${target%/*}" sep=/ ;;
+    esac
+    base="${target##*/}"
+    base="${base##*\\}"
+    suffix="${base#direction}"
+    cp -f "$target" "${dir}${sep}fest-direction${suffix}"
 
 # Tidy modules and verify the toolchain builds everything
 bootstrap:
