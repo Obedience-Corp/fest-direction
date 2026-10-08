@@ -23,7 +23,10 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Format, vet, and claims
-        run: just checks fmt-check vet claims
+        run: |
+          just checks fmt-check
+          just checks vet
+          just checks claims
 
       - name: Unit tests
         run: just test
