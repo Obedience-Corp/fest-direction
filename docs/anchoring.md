@@ -40,7 +40,7 @@ hooks:
   enabled: true
   definitions:
     direction_anchor:
-      command: direction anchor .   # cwd is the festival root; split on whitespace, no shell
+      command: fest-direction anchor .   # cwd is the festival root; split on whitespace, no shell
       fail: closed
       timeout: 60s                  # a Go duration string — a bare number is rejected
       enabled: true
