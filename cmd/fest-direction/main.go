@@ -1,4 +1,4 @@
-// Command direction computes, anchors, and attests stable direction hashes
+// Command fest-direction computes, anchors, and attests stable direction hashes
 // for Festival work units. All behavior lives in internal/cli and the domain
 // packages it calls; main only owns process lifecycle and the exit code.
 package main

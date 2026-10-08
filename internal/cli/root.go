@@ -31,7 +31,7 @@ func Execute(ctx context.Context) error {
 func NewRootCommand() *cobra.Command {
 	a := &app{}
 	root := &cobra.Command{
-		Use:   "direction",
+		Use:   "fest-direction",
 		Short: "Stable, verifiable direction records for Festival work units",
 		Long: `direction computes a direction hash over a work unit with execution state
 removed, anchors it in git before and during execution, and carries it in a

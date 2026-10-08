@@ -1,6 +1,6 @@
 # fest-direction
 
-`direction` — stable, verifiable direction records for Festival work units. The
+`fest-direction` — stable, verifiable direction records for Festival work units, invoked as `fest direction`. The
 trust layer over `.festival` bundles (`obey-shared/festivalbundle`). Design of
 record: Obey-Agent-Economy campaign, `workflow/design/festival-direction-archive`
 (WI-6baeec). Build festival: `direction-archive-DA0004`.
@@ -8,7 +8,7 @@ record: Obey-Agent-Economy campaign, `workflow/design/festival-direction-archive
 ## Build
 
 ```bash
-just build    # bin/direction and bin/fest-direction (fest plugin name)
+just build    # bin/fest-direction
 just test     # unit tests
 just lint     # gofmt, vet, golangci-lint (forbidigo bans fmt.Errorf)
 just golden   # direction-hash fixture reproduction (phase 1 acceptance)
@@ -16,7 +16,7 @@ just golden   # direction-hash fixture reproduction (phase 1 acceptance)
 
 ## Structure
 
-- `cmd/direction` — entry point; lifecycle and exit code only
+- `cmd/fest-direction` — entry point; lifecycle and exit code only
 - `internal/cli` — cobra wiring; flags, output, exit codes; no domain logic
 - `internal/errs` — THE error framework: sentinels + `Wrap(op, err)`
 - `internal/ui` — shared brand palette → Lip Gloss styles; `Printer`

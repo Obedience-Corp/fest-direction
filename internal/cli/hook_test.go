@@ -21,7 +21,7 @@ func TestHookEndToEnd(t *testing.T) {
 	if err := os.MkdirAll(bin, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	build := exec.Command("go", "build", "-o", filepath.Join(bin, "direction"), "../../cmd/direction")
+	build := exec.Command("go", "build", "-o", filepath.Join(bin, "fest-direction"), "../../cmd/fest-direction")
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v\n%s", err, out)
 	}

@@ -1,11 +1,12 @@
 #!/usr/bin/env just --justfile
-# direction CLI — stable, verifiable direction records for Festival work units
+# fest-direction — stable, verifiable direction records for Festival work units.
+# The binary name is the fest plugin: `fest direction`.
 
 set dotenv-load := true
 
-binary_name := "direction"
+binary_name := "fest-direction"
 bin_dir     := "bin"
-cmd_path    := "./cmd/direction"
+cmd_path    := "./cmd/fest-direction"
 version_pkg := "github.com/Obedience-Corp/fest-direction/internal/version"
 version     := env_var_or_default("VERSION", `git describe --tags --exact-match HEAD 2>/dev/null || echo "dev"`)
 commit      := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
@@ -25,22 +26,9 @@ mod checks 'justfiles/lint.just'
 default:
     @just --list --unsorted
 
-# Install direction and the fest-direction plugin name to $GOBIN
+# Install the fest plugin binary to the directory go install uses
 install:
-    #!/usr/bin/env bash
-    set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
-    # .Target is the file go install just wrote. A cross-compile lands in
-    # GOPATH/bin/GOOS_GOARCH, and Windows names end in .exe.
-    target="$(go list -f '{{{{.Target}}' {{cmd_path}})"
-    case "$target" in
-        *\\*) dir="${target%\\*}" sep=$'\\' ;;
-        *) dir="${target%/*}" sep=/ ;;
-    esac
-    base="${target##*/}"
-    base="${base##*\\}"
-    suffix="${base#direction}"
-    cp -f "$target" "${dir}${sep}fest-direction${suffix}"
 
 # Tidy modules and verify the toolchain builds everything
 bootstrap:
@@ -51,10 +39,9 @@ bootstrap:
 dev *ARGS:
     go run -ldflags '{{ldflags}}' {{cmd_path}} {{ARGS}}
 
-# Build direction and the fest-direction plugin name into bin/
+# Build the fest plugin binary into bin/
 build:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
-    cp -f {{bin_dir}}/{{binary_name}} {{bin_dir}}/fest-direction
 
 # Run the unit tests
 test:
