@@ -13,25 +13,35 @@ ldflags     := "-X " + version_pkg + ".Version=" + version + " -X " + version_pk
 default:
     @just --list --justfile {{source_file()}}
 
-# Build for the current platform into bin/
+# Build direction and the fest-direction plugin name into bin/
 [no-cd]
 local:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
+    cp -f {{bin_dir}}/{{binary_name}} {{bin_dir}}/fest-direction
 
 # Build without optimizations for debugging
 [no-cd]
 debug:
     go build -gcflags 'all=-N -l' -o {{bin_dir}}/{{binary_name}}-debug {{cmd_path}}
 
-# Install to $GOBIN
+# Install direction and the fest-direction plugin name to $GOBIN
 [no-cd]
 install:
+    #!/usr/bin/env bash
+    set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
+    dest="$(go env GOBIN)"
+    if [[ -z "$dest" ]]; then dest="$(go env GOPATH)/bin"; fi
+    cp -f "$dest/direction" "$dest/fest-direction"
 
-# Remove the binary from $GOBIN
+# Remove both names from $GOBIN
 [no-cd]
 uninstall:
-    rm -f "$(go env GOPATH)/bin/{{binary_name}}"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dest="$(go env GOBIN)"
+    if [[ -z "$dest" ]]; then dest="$(go env GOPATH)/bin"; fi
+    rm -f "$dest/{{binary_name}}" "$dest/fest-direction"
 
 # Remove build artifacts
 [no-cd]

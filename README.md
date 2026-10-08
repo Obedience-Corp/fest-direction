@@ -21,6 +21,17 @@ All verbs of the build festival (`direction-archive-DA0004`) are implemented:
 | `attest` | **available** | Emit an in-toto Statement v1 with the direction-record predicate, anchors included (`docs/predicate.md`) |
 | `verify` | **available** | Recompute both hashes and check them against a statement; distinguishes a state-only change from a changed plan |
 
+## Fest plugin
+
+`fest direction` is this program. `just install` puts two names on `PATH`:
+
+| Name | Who calls it |
+|------|----------------|
+| `fest-direction` | Fest. Any `fest-*` executable is a plugin, so `fest direction hash <work-unit>` runs this binary. |
+| `direction` | The git `commit-msg` shim and a festival's `pre_task_start` hook (`direction anchor .`). Those call the binary directly. They do not go through fest's plugin dispatcher. |
+
+`plugins/manifest.yml` is optional metadata for `fest understand plugins`. Discovery works without it.
+
 ## Usage
 
 The whole flow on a copy of the `dashboard-DA0001` fixture in a fresh
@@ -88,7 +99,8 @@ the hash. What all of this proves — and does not — is in `docs/claims.md`.
 ## Build
 
 ```bash
-just build      # bin/direction
+just build      # bin/direction and bin/fest-direction
+just install    # both names on PATH; `fest direction` then works
 just test
 just lint
 ```

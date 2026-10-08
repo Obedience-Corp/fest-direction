@@ -8,7 +8,7 @@ record: Obey-Agent-Economy campaign, `workflow/design/festival-direction-archive
 ## Build
 
 ```bash
-just build    # bin/direction
+just build    # bin/direction and bin/fest-direction (fest plugin name)
 just test     # unit tests
 just lint     # gofmt, vet, golangci-lint (forbidigo bans fmt.Errorf)
 just golden   # direction-hash fixture reproduction (phase 1 acceptance)

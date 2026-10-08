@@ -25,9 +25,14 @@ mod checks 'justfiles/lint.just'
 default:
     @just --list --unsorted
 
-# Install the binary to $GOBIN
+# Install direction and the fest-direction plugin name to $GOBIN
 install:
+    #!/usr/bin/env bash
+    set -euo pipefail
     go install -ldflags '{{ldflags}}' {{cmd_path}}
+    dest="$(go env GOBIN)"
+    if [[ -z "$dest" ]]; then dest="$(go env GOPATH)/bin"; fi
+    cp -f "$dest/direction" "$dest/fest-direction"
 
 # Tidy modules and verify the toolchain builds everything
 bootstrap:
@@ -38,9 +43,10 @@ bootstrap:
 dev *ARGS:
     go run -ldflags '{{ldflags}}' {{cmd_path}} {{ARGS}}
 
-# Build the binary into bin/
+# Build direction and the fest-direction plugin name into bin/
 build:
     go build -ldflags '{{ldflags}}' -o {{bin_dir}}/{{binary_name}} {{cmd_path}}
+    cp -f {{bin_dir}}/{{binary_name}} {{bin_dir}}/fest-direction
 
 # Run the unit tests
 test:
